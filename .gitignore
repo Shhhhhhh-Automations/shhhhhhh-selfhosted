@@ -1,0 +1,17 @@
+# Dipendenze
+node_modules/
+.svelte-kit/
+dist/
+
+# Database locale (SQLite)
+*.db
+*.db-journal
+
+# File di ambiente e configurazioni locali
+.env
+.env.*
+!.env.example
+
+# OS file
+.DS_Store
+Thumbs.db
