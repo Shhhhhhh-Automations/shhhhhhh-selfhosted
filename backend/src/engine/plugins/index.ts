@@ -1,8 +1,12 @@
+import type { ExecutionContext } from '../context';
+
 export interface NodeExecutionInput {
 	nodeId: string;
 	type: string;
 	data: Record<string, any>;
 	previousData?: any;
+	/** Full execution context — provides access to $vars, $node outputs, etc. */
+	context?: ExecutionContext;
 }
 
 export interface NodeExecutionOutput {

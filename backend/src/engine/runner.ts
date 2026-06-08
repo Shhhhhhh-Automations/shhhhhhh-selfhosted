@@ -1,6 +1,7 @@
-import { db } from '../db';
-import { nodes, edges, executions } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { edges, executions, nodes, workflows } from '../db/schema';
+import { createContext, registerNodeOutput, type ExecutionContext } from './context';
 import { getPlugin } from './plugins';
 import { evaluateTemplatesInObject } from './template';
 
@@ -9,6 +10,7 @@ export interface NodeExecutionInput {
 	type: string;
 	data: Record<string, any>;
 	previousData?: any;
+	context: ExecutionContext;
 }
 
 export interface NodeExecutionOutput {
@@ -63,9 +65,86 @@ function topologicalSort(
 	return sorted;
 }
 
+/** Load global variables for a workflow from the DB */
+async function loadWorkflowVars(workflowId: string): Promise<Record<string, any>> {
+	const [wf] = await db
+		.select({ variables: workflows.variables })
+		.from(workflows)
+		.where(eq(workflows.id, workflowId))
+		.limit(1);
+	if (!wf) return {};
+	try {
+		return JSON.parse(wf.variables || '{}');
+	} catch {
+		return {};
+	}
+}
+
+/** Execute a single node within a context, update the context, and return the execution record */
+async function executeNode(
+	node: { id: string; type: string; data: string },
+	ctx: ExecutionContext,
+	incomingEdge: { sourceNodeId: string } | undefined,
+): Promise<Record<string, any>> {
+	const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
+	const evaluatedData = evaluateTemplatesInObject(rawData, ctx);
+	const label: string | undefined = rawData.label;
+
+	const previousData = incomingEdge ? ctx.nodeOutputs[incomingEdge.sourceNodeId]?.json : ctx.triggerPayload;
+	const startedAt = new Date().toISOString();
+
+	const executor = getPlugin(node.type);
+	if (!executor) {
+		const skippedOutput = {
+			json: {},
+			success: false,
+			error: `No plugin for: ${node.type}`,
+			nodeType: node.type,
+			label,
+			startedAt,
+			finishedAt: new Date().toISOString(),
+		};
+		registerNodeOutput(ctx, node.id, label, skippedOutput);
+		return {
+			success: false,
+			error: `No plugin for: ${node.type}`,
+			skipped: true,
+			output: { json: {} },
+			input: evaluatedData,
+			nodeType: node.type,
+			label,
+		};
+	}
+
+	const result = await executor({ nodeId: node.id, type: node.type, data: evaluatedData, previousData, context: ctx });
+	const finishedAt = new Date().toISOString();
+
+	const nodeOutput = {
+		json: result.data ?? {},
+		success: result.success,
+		error: result.error,
+		nodeType: node.type,
+		label,
+		startedAt,
+		finishedAt,
+	};
+	registerNodeOutput(ctx, node.id, label, nodeOutput);
+
+	return {
+		success: result.success,
+		error: result.error,
+		output: { json: result.data ?? {} },
+		input: evaluatedData,
+		previousData,
+		nodeType: node.type,
+		label,
+		startedAt,
+		finishedAt,
+	};
+}
+
 /** Run a full workflow and persist the execution result */
 export async function runWorkflow(workflowId: string, triggerPayload: any = {}): Promise<string> {
-	// 1. Create execution record
 	const executionId = crypto.randomUUID();
 	await db.insert(executions).values({
 		id: executionId,
@@ -75,57 +154,30 @@ export async function runWorkflow(workflowId: string, triggerPayload: any = {}):
 		startedAt: new Date().toISOString(),
 	});
 
+	let executionResult: Record<string, any> = {};
+
 	try {
-		// 2. Load nodes and edges
 		const workflowNodes = await db.select().from(nodes).where(eq(nodes.workflowId, workflowId)).all();
 		const workflowEdges = await db.select().from(edges).where(eq(edges.workflowId, workflowId)).all();
 
 		if (workflowNodes.length === 0) throw new Error('Workflow has no nodes');
 
-		// 3. Topological sort
+		const vars = await loadWorkflowVars(workflowId);
+		const ctx = createContext(executionId, workflowId, triggerPayload, vars);
+
 		const sorted = topologicalSort(workflowNodes, workflowEdges);
 
-		// 4. Execute each node
-		const nodeResults: Record<string, any> = {};
-		const executionResult: Record<string, any> = {};
-
 		for (const node of sorted) {
-			const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
-			// Evaluate templates using previous results
-			const evaluatedData = evaluateTemplatesInObject(rawData, nodeResults, triggerPayload);
-
-			// Get the predecessor's output as previousData
 			const incomingEdge = workflowEdges.find((e) => e.targetNodeId === node.id);
-			const previousData = incomingEdge ? nodeResults[incomingEdge.sourceNodeId] : triggerPayload;
+			const nodeRecord = await executeNode(node, ctx, incomingEdge);
+			executionResult[node.id] = nodeRecord;
 
-			const executor = getPlugin(node.type);
-			if (!executor) {
-				executionResult[node.id] = {
-					success: false,
-					error: `No plugin for: ${node.type}`,
-					skipped: true,
-				};
-				continue;
-			}
-
-			const result = await executor({
-				nodeId: node.id,
-				type: node.type,
-				data: evaluatedData,
-				previousData,
-			});
-
-			// Store by node ID and by node label (for template expressions)
-			nodeResults[node.id] = result.data;
-			if (rawData.label) nodeResults[rawData.label] = result.data;
-			executionResult[node.id] = { ...result, nodeType: node.type, label: rawData.label };
-
-			if (!result.success) {
-				throw new Error(`Node '${rawData.label || node.id}' failed: ${result.error}`);
+			if (!nodeRecord.success && !nodeRecord.skipped) {
+				const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
+				throw new Error(`Node '${rawData.label || node.id}' failed: ${nodeRecord.error}`);
 			}
 		}
 
-		// 5. Mark success
 		await db
 			.update(executions)
 			.set({
@@ -142,6 +194,7 @@ export async function runWorkflow(workflowId: string, triggerPayload: any = {}):
 			.set({
 				status: 'failed',
 				error: error.message,
+				executionResult: JSON.stringify(executionResult),
 				finishedAt: new Date().toISOString(),
 			})
 			.where(eq(executions.id, executionId));
@@ -164,12 +217,12 @@ export async function runWorkflowFromNode(
 		startedAt: new Date().toISOString(),
 	});
 
+	let executionResult: Record<string, any> = {};
+
 	try {
-		// Load nodes and edges
 		const workflowNodes = await db.select().from(nodes).where(eq(nodes.workflowId, workflowId)).all();
 		const workflowEdges = await db.select().from(edges).where(eq(edges.workflowId, workflowId)).all();
 
-		// Compute reachable nodes downstream of startNodeId
 		const adjacency: Record<string, string[]> = {};
 		for (const n of workflowNodes) adjacency[n.id] = [];
 		for (const e of workflowEdges) {
@@ -186,45 +239,49 @@ export async function runWorkflowFromNode(
 			for (const nb of adjacency[cur] || []) queue.push(nb);
 		}
 
-		// Filter nodes and edges to the reachable subset
 		const subsetNodes = workflowNodes.filter((n) => reachable.has(n.id));
-		const subsetEdges = workflowEdges.filter((e) => reachable.has(e.sourceNodeId) && reachable.has(e.targetNodeId));
+		const subsetEdges = workflowEdges.filter(
+			(e) => reachable.has(e.sourceNodeId) && reachable.has(e.targetNodeId),
+		);
 
 		if (subsetNodes.length === 0) throw new Error('No nodes reachable from start node');
 
-		// Topological sort restricted to subset
+		const vars = await loadWorkflowVars(workflowId);
+		const ctx = createContext(executionId, workflowId, triggerPayload, vars);
+
 		const sorted = topologicalSort(subsetNodes, subsetEdges);
 
-		// Execute sorted nodes similar to runWorkflow
-		const nodeResults: Record<string, any> = {};
-		const executionResult: Record<string, any> = {};
-
 		for (const node of sorted) {
-			const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
-			const evaluatedData = evaluateTemplatesInObject(rawData, nodeResults, triggerPayload);
-
 			const incomingEdge = subsetEdges.find((e) => e.targetNodeId === node.id);
-			const previousData = incomingEdge ? nodeResults[incomingEdge.sourceNodeId] : triggerPayload;
+			const nodeRecord = await executeNode(node, ctx, incomingEdge);
+			executionResult[node.id] = nodeRecord;
 
-			const executor = getPlugin(node.type);
-			if (!executor) {
-				executionResult[node.id] = { success: false, error: `No plugin for: ${node.type}`, skipped: true };
-				continue;
+			if (!nodeRecord.success && !nodeRecord.skipped) {
+				const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
+				throw new Error(`Node '${rawData.label || node.id}' failed: ${nodeRecord.error}`);
 			}
-
-			const result = await executor({ nodeId: node.id, type: node.type, data: evaluatedData, previousData });
-			nodeResults[node.id] = result.data;
-			if (rawData.label) nodeResults[rawData.label] = result.data;
-			executionResult[node.id] = { ...result, nodeType: node.type, label: rawData.label };
-
-			if (!result.success) throw new Error(`Node '${rawData.label || node.id}' failed: ${result.error}`);
 		}
 
-		await db.update(executions).set({ status: 'success', executionResult: JSON.stringify(executionResult), finishedAt: new Date().toISOString() }).where(eq(executions.id, executionId));
+		await db
+			.update(executions)
+			.set({
+				status: 'success',
+				executionResult: JSON.stringify(executionResult),
+				finishedAt: new Date().toISOString(),
+			})
+			.where(eq(executions.id, executionId));
 
 		return executionId;
 	} catch (error: any) {
-		await db.update(executions).set({ status: 'failed', error: error.message, finishedAt: new Date().toISOString() }).where(eq(executions.id, executionId));
+		await db
+			.update(executions)
+			.set({
+				status: 'failed',
+				error: error.message,
+				executionResult: JSON.stringify(executionResult),
+				finishedAt: new Date().toISOString(),
+			})
+			.where(eq(executions.id, executionId));
 		throw error;
 	}
 }

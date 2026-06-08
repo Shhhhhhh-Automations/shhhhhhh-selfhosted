@@ -1,1 +1,34 @@
-import{a as h,f as g}from"../chunks/CfrYN2ca.js";import{v,X as d,Y as l,w as _,z as a,C as o,y as x}from"../chunks/CvLgNXMg.js";import{s as p}from"../chunks/CLCD54bi.js";import{s as $,p as m}from"../chunks/Cjig2ceS.js";const k={get error(){return m.error},get status(){return m.status}};$.updated.check;const c=k;var b=g("<h1> </h1> <p> </p>",1);function E(f,n){v(n,!0);var t=b(),r=d(t),u=a(r,!0);o(r);var e=x(r,2),i=a(e,!0);o(e),l(()=>{var s;p(u,c.status),p(i,(s=c.error)==null?void 0:s.message)}),h(f,t),_()}export{E as component};
+import { f as g, a as h } from '../chunks/CfrYN2ca.js';
+import { s as $, p as m } from '../chunks/Cjig2ceS.js';
+import { s as p } from '../chunks/CLCD54bi.js';
+import { w as _, z as a, X as d, Y as l, C as o, v, y as x } from '../chunks/CvLgNXMg.js';
+
+const k = {
+	get error() {
+		return m.error;
+	},
+	get status() {
+		return m.status;
+	},
+};
+$.updated.check;
+const c = k;
+var b = g('<h1> </h1> <p> </p>', 1);
+function E(f, n) {
+	v(n, !0);
+	var t = b(),
+		r = d(t),
+		u = a(r, !0);
+	o(r);
+	var e = x(r, 2),
+		i = a(e, !0);
+	o(e),
+		l(() => {
+			var s;
+			p(u, c.status), p(i, (s = c.error) == null ? void 0 : s.message);
+		}),
+		h(f, t),
+		_();
+}
+
+export { E as component };

@@ -3,9 +3,9 @@
 	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
-		"dev": "bun --watch src/index.ts",
-		"build": "bun build ./src/index.ts --outdir ./dist --target=node --external better-sqlite3 --external @hono/node-server",
-		"start": "bun src/index.ts",
+		"dev": "(bun --watch src/index.ts || npx tsx watch src/index.ts)",
+		"build": "(bun build ./src/index.ts --outdir ./dist --target=node --external better-sqlite3 --external @hono/node-server || npx esbuild ./src/index.ts --bundle --platform=node --format=esm --outfile=./dist/index.js --external:better-sqlite3 --external:@hono/node-server --external:bun:sqlite)",
+		"start": "(bun src/index.ts || npx tsx src/index.ts)",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push"

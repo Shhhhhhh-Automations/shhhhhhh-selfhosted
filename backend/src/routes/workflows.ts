@@ -1,7 +1,9 @@
+import { desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { workflows, nodes, edges } from '../db/schema';
+import { edges, executions, nodes, workflows } from '../db/schema';
+import { runWorkflow, runWorkflowFromNode } from '../engine/runner';
+import { usePayload } from '../hooks/usePayload';
 
 const router = new Hono();
 
@@ -18,12 +20,12 @@ router.get('/', async (c) => {
 // Create a new workflow
 router.post('/', async (c) => {
 	try {
-		const body = await c.req.json().catch(() => ({}));
+		const body = await usePayload(c);
 		const name = body.name || 'New Workflow';
-		
+
 		const id = crypto.randomUUID();
 		await db.insert(workflows).values({ id, name });
-		
+
 		const newWorkflow = await db.select().from(workflows).where(eq(workflows.id, id)).get();
 		return c.json(newWorkflow, 201);
 	} catch (error: any) {
@@ -48,14 +50,14 @@ router.get('/:id', async (c) => {
 	return c.json({
 		...workflow,
 		nodes: workflowNodes,
-		edges: workflowEdges
+		edges: workflowEdges,
 	});
 });
 
 // Save workflow graph state
 router.put('/:id/graph', async (c) => {
 	const id = c.req.param('id');
-	const body = await c.req.json();
+	const body = await usePayload(c);
 
 	try {
 		// Verify workflow exists
@@ -76,7 +78,7 @@ router.put('/:id/graph', async (c) => {
 				type: n.type,
 				data: JSON.stringify(n.data),
 				positionX: Math.round(n.position.x),
-				positionY: Math.round(n.position.y)
+				positionY: Math.round(n.position.y),
 			}));
 			await db.insert(nodes).values(nodesToInsert);
 		}
@@ -88,7 +90,7 @@ router.put('/:id/graph', async (c) => {
 				sourceNodeId: e.source,
 				targetNodeId: e.target,
 				sourceHandle: e.sourceHandle,
-				targetHandle: e.targetHandle
+				targetHandle: e.targetHandle,
 			}));
 			await db.insert(edges).values(edgesToInsert);
 		}
@@ -102,10 +104,11 @@ router.put('/:id/graph', async (c) => {
 // Toggle deploy status
 router.post('/:id/deploy', async (c) => {
 	const id = c.req.param('id');
-	const body = await c.req.json();
+	const body = await usePayload(c);
 
 	try {
-		await db.update(workflows)
+		await db
+			.update(workflows)
 			.set({ isActive: body.isActive, updatedAt: new Date().toISOString() })
 			.where(eq(workflows.id, id));
 
@@ -118,7 +121,10 @@ router.post('/:id/deploy', async (c) => {
 					if (node.type.toLowerCase() === 'webhook') {
 						if (!raw.webhookPath) {
 							raw.webhookPath = `/api/webhooks/${id}/${node.id}`;
-							await db.update(nodes).set({ data: JSON.stringify(raw) }).where(eq(nodes.id, node.id));
+							await db
+								.update(nodes)
+								.set({ data: JSON.stringify(raw) })
+								.where(eq(nodes.id, node.id));
 						}
 					}
 				} catch (err) {
@@ -150,7 +156,7 @@ router.delete('/:id', async (c) => {
 // Rename a workflow
 router.patch('/:id', async (c) => {
 	const id = c.req.param('id');
-	const body = await c.req.json();
+	const body = await usePayload(c);
 	try {
 		await db
 			.update(workflows)
@@ -162,5 +168,63 @@ router.patch('/:id', async (c) => {
 	}
 });
 
-export default router;
+// Execute workflow manually
+router.post('/:id/execute', async (c) => {
+	const id = c.req.param('id');
+	const payload = await usePayload(c);
+	try {
+		const executionId = await runWorkflow(id, payload);
+		const execution = await db
+			.select()
+			.from(executions)
+			.where(eq(executions.id, executionId))
+			.get();
+		return c.json({ success: true, execution });
+	} catch (error: any) {
+		try {
+			const execution = await db
+				.select()
+				.from(executions)
+				.where(eq(executions.workflowId, id))
+				.orderBy(desc(executions.startedAt))
+				.limit(1)
+				.get();
+			if (execution) {
+				return c.json({ success: false, error: error.message, execution }, 200);
+			}
+		} catch {}
+		return c.json({ success: false, error: error.message }, 500);
+	}
+});
 
+// Execute workflow starting from a specific node
+router.post('/:id/execute/from-node/:nodeId', async (c) => {
+	const id = c.req.param('id');
+	const nodeId = c.req.param('nodeId');
+	const payload = await usePayload(c);
+	try {
+		const executionId = await runWorkflowFromNode(id, nodeId, payload);
+		const execution = await db
+			.select()
+			.from(executions)
+			.where(eq(executions.id, executionId))
+			.get();
+		return c.json({ success: true, execution });
+	} catch (error: any) {
+		try {
+			const execution = await db
+				.select()
+				.from(executions)
+				.where(eq(executions.workflowId, id))
+				.orderBy(desc(executions.startedAt))
+				.limit(1)
+				.get();
+			if (execution) {
+				return c.json({ success: false, error: error.message, execution }, 200);
+			}
+		} catch {}
+		return c.json({ success: false, error: error.message }, 500);
+	}
+});
+
+export default router;

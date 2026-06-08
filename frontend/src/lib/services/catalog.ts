@@ -89,7 +89,8 @@ export const serviceCatalog: ServiceDefinition[] = [
 				type: 'url',
 				placeholder: 'https://api.example.com/data',
 				required: true,
-				helpText: 'You can reference previous node output using {{ $node["Node Name"].data.field }}',
+				helpText:
+					'You can reference previous node output using {{ $node["Node Name"].data.field }}',
 			},
 			{
 				key: 'method',
