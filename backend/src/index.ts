@@ -4,6 +4,8 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import settingsRouter from './routes/settings';
 import setupRouter from './routes/setup';
+import engineRouter from './routes/engine';
+import workflowsRouter from './routes/workflows';
 import { migrateDb } from './db';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +29,8 @@ app.get('/api/health', (c) => {
 
 app.route('/api/settings', settingsRouter);
 app.route('/api/setup', setupRouter);
+app.route('/api/engine', engineRouter);
+app.route('/api/workflows', workflowsRouter);
 
 // Serve static files using absolute path
 const publicDir = path.join(__dirname, '..', 'public');

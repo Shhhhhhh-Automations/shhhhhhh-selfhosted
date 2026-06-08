@@ -1,6 +1,7 @@
 {
   "name": "@shhhhhhh-automations/shhhhhhh-automation",
-  "version": "0.1.5",
+  "version": "0.1.6",
+  "type": "module",
   "description": "Quiet operations. Loud automation. Self-hosted platform.",
   "bin": {
     "shhhhhhh": "bin/shhhhhhh.js"
@@ -9,7 +10,8 @@
     "bin",
     "dist",
     "public",
-    "drizzle"
+    "drizzle",
+    "bin/logo.txt"
   ],
   "publishConfig": {
     "access": "public"
@@ -19,7 +21,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",
-    "better-sqlite3": "^11.3.0"
+    "better-sqlite3": "^11.3.0",
+    "chalk": "^5.6.2"
   },
   "engines": {
     "node": ">=18.0.0"
