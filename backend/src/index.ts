@@ -6,10 +6,11 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { migrateDb } from './db';
 import { useError } from './hooks/useError';
+import { requireAuth } from './middleware/auth';
+import authRouter from './routes/auth';
 import engineRouter from './routes/engine';
 import executionsRouter from './routes/executions';
 import settingsRouter from './routes/settings';
-import setupRouter from './routes/setup';
 import variablesRouter from './routes/variables';
 import webhooksRouter from './routes/webhooks';
 import workflowsRouter from './routes/workflows';
@@ -34,8 +35,17 @@ app.get('/api/health', (c) => {
 	});
 });
 
+// Public API routes
+app.route('/api/auth', authRouter);
 app.route('/api/settings', settingsRouter);
-app.route('/api/setup', setupRouter);
+
+// Apply auth middleware to all other API routes
+app.use('/api/engine/*', requireAuth);
+app.use('/api/workflows/*', requireAuth);
+app.use('/api/webhooks/*', requireAuth);
+app.use('/api/executions/*', requireAuth);
+
+// Protected API routes
 app.route('/api/engine', engineRouter);
 app.route('/api/workflows', workflowsRouter);
 app.route('/api/workflows', variablesRouter);

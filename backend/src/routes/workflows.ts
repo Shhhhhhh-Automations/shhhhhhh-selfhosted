@@ -2,6 +2,7 @@ import { desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { db } from '../db';
 import { edges, executions, nodes, workflows } from '../db/schema';
+import { enqueueWorkflow } from '../engine/queue';
 import { runWorkflow, runWorkflowFromNode } from '../engine/runner';
 import { usePayload } from '../hooks/usePayload';
 
@@ -173,7 +174,20 @@ router.post('/:id/execute', async (c) => {
 	const id = c.req.param('id');
 	const payload = await usePayload(c);
 	try {
-		const executionId = await runWorkflow(id, payload);
+		const executionId = crypto.randomUUID();
+		await db.insert(executions).values({
+			id: executionId,
+			workflowId: id,
+			status: 'pending',
+			triggerPayload: JSON.stringify(payload),
+			startedAt: new Date().toISOString(),
+		});
+
+		await enqueueWorkflow({
+			workflowId: id,
+			triggerPayload: payload,
+		}, executionId);
+
 		const execution = await db
 			.select()
 			.from(executions)
@@ -203,7 +217,21 @@ router.post('/:id/execute/from-node/:nodeId', async (c) => {
 	const nodeId = c.req.param('nodeId');
 	const payload = await usePayload(c);
 	try {
-		const executionId = await runWorkflowFromNode(id, nodeId, payload);
+		const executionId = crypto.randomUUID();
+		await db.insert(executions).values({
+			id: executionId,
+			workflowId: id,
+			status: 'pending',
+			triggerPayload: JSON.stringify(payload),
+			startedAt: new Date().toISOString(),
+		});
+
+		await enqueueWorkflow({
+			workflowId: id,
+			startNodeId: nodeId,
+			triggerPayload: payload,
+		}, executionId);
+
 		const execution = await db
 			.select()
 			.from(executions)

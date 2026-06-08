@@ -4,124 +4,182 @@ import { goto } from '$app/navigation';
 import { apiFetch } from '$lib/api/client';
 
 let isConfigured = $state<boolean | null>(null);
+let isLoggedIn = $state<boolean | null>(null);
 
 onMount(async () => {
 	try {
 		const status = await apiFetch('/settings/status');
 		isConfigured = status.isConfigured;
+
+		if (isConfigured) {
+			try {
+				await apiFetch('/auth/me');
+				isLoggedIn = true;
+			} catch (e) {
+				isLoggedIn = false;
+			}
+		}
 	} catch (e) {
 		console.error('Failed to check status', e);
 	}
 });
 </script>
 
-<div class="flex flex-col items-center justify-start min-h-screen pt-24 px-6 md:px-12 text-center">
-  <!-- Title Section -->
-  <div class="space-y-4 mb-16">
-    <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white leading-[0.9]">
-      <span class="block">Quiet operations.</span>
-      <span class="block text-white/40">Loud automation.</span>
-    </h1>
-  </div>
+<div class="relative flex flex-col items-center justify-start min-h-screen pt-24 px-6 md:px-12 text-center bg-[#0a0a0b] overflow-hidden font-sans">
+	<!-- Deep Dark Grid Background -->
+	<div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px;"></div>
 
-  <!-- Action Buttons -->
-  <div class="flex flex-col sm:flex-row gap-4 mb-24">
-    {#if isConfigured === false}
-      <button 
-        onclick={() => goto('/setup')}
-        class="group relative flex items-center justify-center gap-2 px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all duration-300"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-rocket"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3 -5a9 9 0 0 0 6 -8a3 3 0 0 0 -3 -3a9 9 0 0 0 -8 6a6 6 0 0 0 -5 3" /><path d="M7 14a6 6 0 0 0 -3 6a6 6 0 0 0 6 -3" /><path d="M15 9m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
-        Deploy Silently
-      </button>
-    {:else if isConfigured === true}
-      <button 
-        onclick={() => goto('/dashboard')}
-        class="group relative flex items-center justify-center gap-2 px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all duration-300"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-layout-dashboard"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h6v8h-6z" /><path d="M4 16h6v4h-6z" /><path d="M14 12h6v8h-6z" /><path d="M14 4h6v4h-6z" /></svg>
-        Open Dashboard
-      </button>
-    {:else}
-      <button 
-        disabled
-        class="px-8 py-4 bg-white/10 text-white/50 rounded-full font-bold text-lg animate-pulse"
-      >
-        Initializing...
-      </button>
-    {/if}
-    
-    <button class="flex items-center justify-center gap-2 px-8 py-4 bg-black border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/5 hover:border-white/40 transition-all duration-300">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-book-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12z" /><path d="M19 16h-12a2 2 0 0 0 -2 2" /><path d="M9 8h6" /></svg>
-      View Docs
-    </button>
-  </div>
+	<!-- Glow effects -->
+	<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] pointer-events-none opacity-40 filter blur-[120px]" style="background: radial-gradient(circle at 50% 0%, rgba(59,130,246,0.3), transparent 70%);"></div>
 
-  <!-- Workflow Visualization -->
-  <div class="relative w-full max-w-5xl aspect-[16/9] mb-24">
-    <!-- SVG Canvas for the fluid line -->
-    <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 1000 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M250 350C400 350 400 150 550 150H700" stroke="url(#lineGradient)" stroke-width="8" stroke-linecap="round" class="animate-flow" />
-      <defs>
-        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="oklch(85% 0.25 145)" />
-          <stop offset="50%" stop-color="oklch(65% 0.25 310)" />
-          <stop offset="100%" stop-color="oklch(75% 0.2 230)" />
-        </linearGradient>
-      </defs>
-    </svg>
+	<!-- Navigation/Top Bar mock (optional aesthetic touch) -->
+	<div class="absolute top-6 w-full max-w-6xl px-6 flex justify-between items-center z-20">
+		<div class="flex items-center gap-2">
+			<div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 4.9V17L12 22l-9-4.9V7z"/></svg>
+			</div>
+			<span class="font-bold text-white text-lg tracking-tight">shhhhhhh</span>
+		</div>
+	</div>
 
-    <!-- Node 1: Supabase / Database Trigger -->
-    <div class="absolute top-[60%] left-[10%] w-72 p-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl text-left space-y-3 shadow-2xl">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-accent2/20 flex items-center justify-center text-accent2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-database"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6m-8 0a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /><path d="M4 6v6a8 3 0 0 0 16 0v-6" /><path d="M4 12v6a8 3 0 0 0 16 0v-6" /></svg>
-        </div>
-        <span class="font-bold text-lg">Supabase</span>
-      </div>
-      <div>
-        <div class="text-xl font-bold">Database Trigger</div>
-        <div class="text-sm text-white/40">Table: Orders</div>
-      </div>
-    </div>
+	<!-- Title Section -->
+	<div class="relative z-10 space-y-6 mb-12 mt-12 max-w-4xl">
+		<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-sm text-gray-300 backdrop-blur-md mb-4">
+			<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+			v0.2.0 Enterprise Release
+		</div>
+		<h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
+			Unobtrusive execution.<br>
+			<span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Unstoppable automation.</span>
+		</h1>
+		<p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto font-medium">
+			The self-hosted workflow engine for developers. Build, test, and deploy complex orchestrations with an intuitive canvas.
+		</p>
+	</div>
 
-    <!-- Node 2: Google Docs / Create Document -->
-    <div class="absolute top-[15%] right-[10%] w-72 p-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl text-left space-y-3 shadow-2xl">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-accent1/20 flex items-center justify-center text-accent1">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-text"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
-        </div>
-        <span class="font-bold text-lg">Google Docs</span>
-      </div>
-      <div>
-        <div class="text-xl font-bold">Create Google Document</div>
-        <div class="text-sm text-white/40">Title: Order #1042</div>
-      </div>
-    </div>
-  </div>
+	<!-- Action Buttons -->
+	<div class="relative z-10 flex flex-col sm:flex-row gap-4 mb-20">
+		{#if isConfigured === false}
+			<button 
+				onclick={() => goto('/setup')}
+				class="flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-black rounded-xl font-bold text-[15px] hover:bg-gray-100 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3 -5a9 9 0 0 0 6 -8a3 3 0 0 0 -3 -3a9 9 0 0 0 -8 6a6 6 0 0 0 -5 3" /><path d="M7 14a6 6 0 0 0 -3 6a6 6 0 0 0 6 -3" /><path d="M15 9m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+				Deploy Silently
+			</button>
+		{:else if isConfigured === true}
+			{#if isLoggedIn === true}
+				<button 
+					onclick={() => goto('/dashboard')}
+					class="flex items-center justify-center gap-2 px-8 py-3.5 bg-blue-600 text-white rounded-xl font-bold text-[15px] hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v8h-6z" /><path d="M4 16h6v4h-6z" /><path d="M14 12h6v8h-6z" /><path d="M14 4h6v4h-6z" /></svg>
+					Open Workspace
+				</button>
+			{:else if isLoggedIn === false}
+				<button 
+					onclick={() => goto('/login')}
+					class="flex items-center justify-center gap-2 px-8 py-3.5 bg-blue-600 text-white rounded-xl font-bold text-[15px] hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /><path d="M20 12h-13l3 -3m0 6l-3 -3" /></svg>
+					Login to Instance
+				</button>
+			{:else}
+				<button 
+					disabled
+					class="px-8 py-3.5 bg-white/10 text-white/40 rounded-xl font-bold text-[15px] animate-pulse"
+				>
+					Initializing...
+				</button>
+			{/if}
+		{:else}
+			<button 
+				disabled
+				class="px-8 py-3.5 bg-white/10 text-white/40 rounded-xl font-bold text-[15px] animate-pulse"
+			>
+				Initializing...
+			</button>
+		{/if}
+		
+		<button class="flex items-center justify-center gap-2 px-8 py-3.5 bg-[#1a1a1c] text-white border border-white/10 rounded-xl font-bold text-[15px] hover:bg-[#252528] hover:border-white/20 transition-all duration-300">
+			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12z" /><path d="M19 16h-12a2 2 0 0 0 -2 2" /><path d="M9 8h6" /></svg>
+			Read Documentation
+		</button>
+	</div>
 
-  <!-- Bottom Description -->
-  <p class="max-w-3xl text-xl md:text-2xl text-white/60 font-light leading-relaxed">
-    Watch your data move seamlessly. Trigger a workflow instantly when Supabase updates, process the data, and watch it generate a Google Doc automatically—all mapped out inside a fluid, neon-lit canvas.
-  </p>
+	<!-- App Showcase Window -->
+	<div class="relative z-10 w-full max-w-5xl mb-12 flex items-center justify-center pointer-events-none">
+		<!-- Light Workspace inside Dark Theme -->
+		<div class="w-full aspect-[16/9] bg-[#f9fafb] rounded-t-2xl shadow-2xl overflow-hidden border border-white/10 relative flex flex-col">
+			<!-- Window Header -->
+			<div class="h-12 bg-white border-b border-gray-200 flex items-center px-4 gap-4 flex-shrink-0">
+				<div class="flex gap-2">
+					<div class="w-3 h-3 rounded-full bg-red-400"></div>
+					<div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+					<div class="w-3 h-3 rounded-full bg-green-400"></div>
+				</div>
+				<div class="flex-1 text-center text-xs font-bold text-gray-400 tracking-wider uppercase">Workspace</div>
+			</div>
+			<!-- Window Body -->
+			<div class="flex-1 relative w-full overflow-hidden">
+				<!-- Light Canvas Dots -->
+				<div class="absolute inset-0" style="background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 20px 20px;"></div>
+				
+				<!-- Animated Path connecting nodes -->
+				<svg class="absolute inset-0 w-full h-full" viewBox="0 0 1000 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M320 250 C 450 250, 450 150, 600 150" stroke="#9ca3af" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 8" />
+					<path d="M320 250 C 450 250, 450 350, 600 350" stroke="#9ca3af" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 8" />
+				</svg>
+
+				<!-- Node 1: Webhook Trigger (Light Mode) -->
+				<div class="absolute top-[40%] left-[10%] w-[240px] p-3 bg-white border border-gray-200 rounded-xl text-left shadow-md flex items-center gap-3">
+					<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-700">
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" /></svg>
+					</div>
+					<div>
+						<div class="text-[13px] font-bold text-gray-900 leading-tight">Webhook</div>
+						<div class="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Trigger</div>
+					</div>
+					<div class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-gray-400 rounded-full"></div>
+				</div>
+
+				<!-- Node 2: Database Action (Light Mode) -->
+				<div class="absolute top-[20%] right-[15%] w-[240px] p-3 bg-white border border-gray-200 rounded-xl text-left shadow-md flex items-center gap-3">
+					<div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-gray-400 rounded-full"></div>
+					<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-blue-600">
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6c0 1.657 3.582 3 8 3s8 -1.343 8 -3s-3.582 -3 -8 -3s-8 1.343 -8 3"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8 -1.343 8 -3v-6"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8 -1.343 8 -3v-6"/></svg>
+					</div>
+					<div>
+						<div class="text-[13px] font-bold text-gray-900 leading-tight">Postgres</div>
+						<div class="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Action</div>
+					</div>
+					<div class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-gray-400 rounded-full"></div>
+				</div>
+
+				<!-- Node 3: AI Agent (Light Mode) -->
+				<div class="absolute top-[60%] right-[15%] w-[240px] p-3 bg-white border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)] rounded-xl text-left flex items-center gap-3">
+					<div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-gray-400 rounded-full"></div>
+					<div class="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-purple-600">
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+					</div>
+					<div>
+						<div class="text-[13px] font-bold text-gray-900 leading-tight">AI Agent</div>
+						<div class="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Success</div>
+					</div>
+					<div class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-gray-400 rounded-full"></div>
+					
+					<!-- Success Badge -->
+					<div class="absolute -top-2 -right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-emerald-500 bg-white text-emerald-500 shadow-sm">
+						<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+					</div>
+				</div>
+			</div>
+			<!-- Fading gradient at bottom of showcase -->
+			<div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#0a0a0b] to-transparent z-10"></div>
+		</div>
+	</div>
 </div>
 
 <style>
-  .animate-flow {
-    stroke-dasharray: 20;
-    animation: flow 20s linear infinite;
-  }
-
-  @keyframes flow {
-    from {
-      stroke-dashoffset: 400;
-    }
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-
-  h1 {
-    font-family: "Bricolage Grotesque", sans-serif;
-  }
+	h1 { font-family: "Bricolage Grotesque", sans-serif; }
 </style>

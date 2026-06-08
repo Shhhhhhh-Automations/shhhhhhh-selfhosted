@@ -1,5 +1,7 @@
 <script lang="ts">
 import '../app.css';
+import Toaster from '$lib/components/ui/Toaster.svelte';
+
 let { children } = $props();
 </script>
 
@@ -19,4 +21,6 @@ let { children } = $props();
   <main class="relative z-10 min-h-screen">
     {@render children()}
   </main>
+
+  <Toaster />
 </div>

@@ -50,6 +50,44 @@ async function main() {
 	process.env.SHHHHHHH_DATA_DIR = SHHHHHHH_DATA_DIR;
 	process.env.SHHHHHHH_MIGRATIONS_DIR = path.join(__dirname, '..', 'drizzle');
 
+	const args = process.argv.slice(2);
+	const command = args[0];
+
+	if (command === 'sync') {
+		console.log(chalk.blue('Syncing workflows from database to local JSON files...'));
+		try {
+			const Database = (await import('better-sqlite3')).default;
+			const dbPath = path.join(SHHHHHHH_DATA_DIR, 'shhhhhhh.db');
+			if (!fs.existsSync(dbPath)) {
+				console.error(chalk.red(`Database not found at ${dbPath}`));
+				process.exit(1);
+			}
+			const db = new Database(dbPath);
+			const workflows = db.prepare('SELECT * FROM workflows').all();
+			const nodes = db.prepare('SELECT * FROM nodes').all();
+			const edges = db.prepare('SELECT * FROM edges').all();
+
+			const syncDir = path.join(process.cwd(), 'workflows-sync');
+			if (!fs.existsSync(syncDir)) fs.mkdirSync(syncDir, { recursive: true });
+
+			for (const wf of workflows) {
+				const wfData = {
+					...wf,
+					nodes: nodes.filter(n => n.workflow_id === wf.id),
+					edges: edges.filter(e => e.workflow_id === wf.id)
+				};
+				const fileName = `${wf.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${wf.id}.json`;
+				fs.writeFileSync(path.join(syncDir, fileName), JSON.stringify(wfData, null, 2));
+			}
+
+			console.log(chalk.green(`Successfully exported ${workflows.length} workflows to ./workflows-sync/`));
+			process.exit(0);
+		} catch (err) {
+			console.error(chalk.red('Sync failed:'), err);
+			process.exit(1);
+		}
+	}
+
 	// Load the backend server
 	const serverPath = path.join(__dirname, '..', 'dist', 'index.js');
 

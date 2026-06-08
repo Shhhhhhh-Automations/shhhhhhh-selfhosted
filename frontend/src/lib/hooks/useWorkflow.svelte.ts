@@ -137,7 +137,20 @@ export function useWorkflow(initialWorkflowId: string) {
 			});
 
 			if (response.execution) {
-				const execResult = JSON.parse(response.execution.executionResult || '{}');
+				let exec = response.execution;
+				
+				// Poll for completion if it's running asynchronously
+				while (exec.status === 'running' || exec.status === 'pending') {
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+					try {
+						exec = await apiFetch(`/executions/${exec.id}`);
+					} catch (pollErr) {
+						console.error('Failed to poll execution status:', pollErr);
+						break;
+					}
+				}
+
+				const execResult = JSON.parse(exec.executionResult || '{}');
 				// Sync variable store with latest node outputs
 				variableStore.ingestExecutionResult(execResult);
 				nodes = nodes.map((n) => {
@@ -149,8 +162,8 @@ export function useWorkflow(initialWorkflowId: string) {
 							status: nodeRes ? (nodeRes.success ? 'success' : 'failed') : undefined,
 							error:
 								nodeRes?.error ||
-								(response.execution.error && n.id === response.execution.errorNodeId
-									? response.execution.error
+								(exec.error && n.id === exec.errorNodeId
+									? exec.error
 									: undefined),
 							execution: nodeRes,
 						},
@@ -158,7 +171,7 @@ export function useWorkflow(initialWorkflowId: string) {
 				});
 
 				if (onComplete) {
-					onComplete(response.execution);
+					onComplete(exec);
 				}
 			}
 		} catch (e: any) {
@@ -208,7 +221,20 @@ export function useWorkflow(initialWorkflowId: string) {
 			});
 
 			if (response.execution) {
-				const execResult = JSON.parse(response.execution.executionResult || '{}');
+				let exec = response.execution;
+				
+				// Poll for completion if it's running asynchronously
+				while (exec.status === 'running' || exec.status === 'pending') {
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+					try {
+						exec = await apiFetch(`/executions/${exec.id}`);
+					} catch (pollErr) {
+						console.error('Failed to poll execution status:', pollErr);
+						break;
+					}
+				}
+
+				const execResult = JSON.parse(exec.executionResult || '{}');
 				// Sync variable store with latest node outputs
 				variableStore.ingestExecutionResult(execResult);
 				nodes = nodes.map((n) => {
@@ -220,8 +246,8 @@ export function useWorkflow(initialWorkflowId: string) {
 							status: nodeRes ? (nodeRes.success ? 'success' : 'failed') : undefined,
 							error:
 								nodeRes?.error ||
-								(response.execution.error && n.id === response.execution.errorNodeId
-									? response.execution.error
+								(exec.error && n.id === exec.errorNodeId
+									? exec.error
 									: undefined),
 							execution: nodeRes,
 						},
@@ -229,7 +255,7 @@ export function useWorkflow(initialWorkflowId: string) {
 				});
 
 				if (onComplete) {
-					onComplete(response.execution);
+					onComplete(exec);
 				}
 			}
 		} catch (e: any) {

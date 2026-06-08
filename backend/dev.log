@@ -1,0 +1,54 @@
+
+> shhhhhhh-backend@0.1.0 dev
+> (bun --watch src/index.ts || npx tsx watch src/index.ts)
+
+sh: bun: command not found
+Detected Node runtime. Using better-sqlite3.
+Running migrations...
+Migrations complete.
+Server is running on port 3000
+11:13:29 PM [tsx] change in ./src/engine/runner.ts Restarting...
+cDetected Node runtime. Using better-sqlite3.
+Running migrations...
+Migrations complete.
+Server is running on port 3000
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at serve (file:///Users/kask1/.gemini/antigravity/worktrees/shhhhhhh-selfhosted/refactor-task-flow-n8n/backend/node_modules/@hono/node-server/dist/index.mjs:1031:9)
+    at startServer (/Users/kask1/.gemini/antigravity/worktrees/shhhhhhh-selfhosted/refactor-task-flow-n8n/backend/src/index.ts:65:3)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+
+Node.js v25.0.0111:13:46 PM [tsx] change in ./src/engine/plugins/index.ts Rerunning...
+cDetected Node runtime. Using better-sqlite3.
+Running migrations...
+Migrations complete.
+Server is running on port 3000
+11:31:03 PM [tsx] Process didn't exit in 5s. Force killing...
+11:33:55 PM [tsx] change in ./src/engine/runner.ts Process hasn't exited. Killing process...
+11:34:18 PM [tsx] change in ./src/routes/workflows.ts Process hasn't exited. Killing process...
+11:39:06 PM [tsx] change in ./src/db/schema.ts Process hasn't exited. Killing process...
+11:39:34 PM [tsx] change in ./src/index.ts Process hasn't exited. Killing process...
+12:20:39 AM [tsx] unlink in ./src/routes/setup.ts Process hasn't exited. Killing process...
+12:20:47 AM [tsx] change in ./src/index.ts Process hasn't exited. Killing process...
+12:24:03 AM [tsx] Previous process hasn't exited yet. Force killing...
+12:24:08 AM [tsx] Process didn't exit in 5s. Force killing...
+sh: line 1: 23064 Killed: 9               npx tsx watch src/index.ts
+ss: '::',
+  port: 3000
+}
+
+Node.js v25.0.0

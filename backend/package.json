@@ -6,17 +6,24 @@
 		"dev": "(bun --watch src/index.ts || npx tsx watch src/index.ts)",
 		"build": "(bun build ./src/index.ts --outdir ./dist --target=node --external better-sqlite3 --external @hono/node-server || npx esbuild ./src/index.ts --bundle --platform=node --format=esm --outfile=./dist/index.js --external:better-sqlite3 --external:@hono/node-server --external:bun:sqlite)",
 		"start": "(bun src/index.ts || npx tsx src/index.ts)",
+		"worker": "(bun src/worker.ts || npx tsx src/worker.ts)",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push"
 	},
 	"dependencies": {
+		"@ai-sdk/openai": "^3.0.68",
 		"@hono/node-server": "^2.0.4",
+		"ai": "^6.0.198",
+		"bcryptjs": "^3.0.3",
 		"better-sqlite3": "^12.10.0",
+		"bullmq": "^5.78.0",
 		"drizzle-orm": "^0.30.9",
-		"hono": "^4.2.0"
+		"hono": "^4.2.0",
+		"ioredis": "^5.11.1"
 	},
 	"devDependencies": {
+		"@types/bcryptjs": "^2.4.6",
 		"@types/bun": "latest",
 		"drizzle-kit": "^0.21.1"
 	}

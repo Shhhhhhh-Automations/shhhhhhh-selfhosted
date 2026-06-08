@@ -2,17 +2,11 @@
 	import type { useVariableStore } from '$lib/hooks/useVariableStore.svelte';
 
 	interface Props {
-		/** Current value (string, may contain {{ ... }} expressions) */
 		value: string;
-		/** Placeholder for the plain text input */
 		placeholder?: string;
-		/** CSS class forwarded to the root element */
 		class?: string;
-		/** Called whenever the value changes */
 		onchange?: (value: string) => void;
-		/** The variable store — provides autocomplete suggestions & preview data */
 		variableStore?: ReturnType<typeof useVariableStore>;
-		/** Label shown above the field */
 		label?: string;
 	}
 
@@ -25,18 +19,14 @@
 		label,
 	}: Props = $props();
 
-	// Whether the field is in "expression mode" (shows {{ }} editor)
 	let isExpression = $state(value.includes('{{'));
 	let showAutocomplete = $state(false);
 	let filterText = $state('');
 
-	// Derived preview: resolve the expression against the last execution outputs
 	let previewValue = $derived.by(() => {
 		if (!isExpression || !variableStore || !value.includes('{{')) return null;
-		// Simple client-side preview — replaces $node["Label"].json.field using nodeOutputs
 		try {
 			return value.replace(/\{\{\s*(.+?)\s*\}\}/g, (match, expr) => {
-				// $node["Label"].json.field
 				const nodeMatch = expr.match(/\$node\["(.+?)"\]\.(?:json|data)\.(.+)/);
 				if (nodeMatch) {
 					const [, nodeName, path] = nodeMatch;
@@ -47,7 +37,6 @@
 						? `<span class="preview-resolved">${String(resolved)}</span>`
 						: `<span class="preview-missing">${match}</span>`;
 				}
-				// $vars.name
 				const varsMatch = expr.match(/\$vars\.(.+)/);
 				if (varsMatch && variableStore) {
 					const resolved = variableStore.vars[varsMatch[1]];
@@ -79,7 +68,6 @@
 			value = `{{ ${value} }}`;
 			onchange?.(value);
 		} else if (!isExpression) {
-			// Strip {{ }} wrappers if present
 			value = value.replace(/^\{\{\s*/, '').replace(/\s*\}\}$/, '');
 			onchange?.(value);
 		}
@@ -96,7 +84,6 @@
 	}
 
 	function insertExpression(expr: string) {
-		// Replace the current open {{ expression with the chosen one
 		if (value.includes('{{') && !value.includes('}}')) {
 			value = value.replace(/\{\{[^}]*$/, expr);
 		} else {
@@ -112,7 +99,7 @@
 		<label class="expr-label">{label}</label>
 	{/if}
 
-	<div class="input-row">
+	<div class="input-row" class:is-expression={isExpression}>
 		{#if isExpression}
 			<textarea
 				class="expr-textarea"
@@ -139,14 +126,13 @@
 			class="fx-toggle"
 			class:active={isExpression}
 			onclick={toggleMode}
-			title={isExpression ? 'Disattiva modalità espressione' : 'Attiva modalità espressione'}
+			title={isExpression ? 'Disable expression mode' : 'Enable expression mode'}
 			type="button"
 		>
 			<span class="fx-icon">ƒ<span class="fx-x">x</span></span>
 		</button>
 	</div>
 
-	<!-- Live Preview -->
 	{#if isExpression && previewValue}
 		<div class="expr-preview">
 			<span class="preview-label">Preview:</span>
@@ -155,7 +141,6 @@
 		</div>
 	{/if}
 
-	<!-- Autocomplete Dropdown -->
 	{#if showAutocomplete && filteredSuggestions.length > 0}
 		<div class="autocomplete-dropdown">
 			{#each filteredSuggestions as suggestion}
@@ -189,23 +174,31 @@
 		font-weight: 600;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		color: oklch(65% 0.05 270);
+		color: #6b7280;
 	}
 
 	.input-row {
 		display: flex;
 		align-items: stretch;
 		gap: 0;
-		border: 1px solid oklch(35% 0.06 270);
+		border: 1px solid #d1d5db;
 		border-radius: 6px;
 		overflow: hidden;
-		background: oklch(14% 0.02 270);
+		background: #ffffff;
 		transition: border-color 0.15s;
+		box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 	}
 
 	.input-row:focus-within {
-		border-color: oklch(65% 0.25 310);
-		box-shadow: 0 0 0 2px oklch(65% 0.25 310 / 0.15);
+		border-color: #3b82f6;
+		box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+	}
+
+	.input-row.is-expression {
+		border-color: #8b5cf6;
+	}
+	.input-row.is-expression:focus-within {
+		box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
 	}
 
 	.expr-input,
@@ -214,7 +207,7 @@
 		background: transparent;
 		border: none;
 		outline: none;
-		color: oklch(92% 0.02 270);
+		color: #111827;
 		font-size: 0.8rem;
 		font-family: 'JetBrains Mono', 'Fira Code', monospace;
 		padding: 0.4rem 0.5rem;
@@ -228,25 +221,28 @@
 
 	.fx-toggle {
 		flex-shrink: 0;
-		background: oklch(20% 0.04 270);
+		background: #f9fafb;
 		border: none;
-		border-left: 1px solid oklch(30% 0.06 270);
+		border-left: 1px solid #e5e7eb;
 		padding: 0 0.6rem;
 		cursor: pointer;
-		color: oklch(55% 0.05 270);
+		color: #6b7280;
 		font-size: 0.75rem;
 		font-weight: 700;
-		transition:
-			background 0.15s,
-			color 0.15s;
+		transition: background 0.15s, color 0.15s;
 		display: flex;
 		align-items: center;
 	}
 
-	.fx-toggle:hover,
+	.fx-toggle:hover {
+		background: #f3f4f6;
+		color: #111827;
+	}
+
 	.fx-toggle.active {
-		background: oklch(28% 0.12 310);
-		color: oklch(80% 0.25 310);
+		background: #f3e8ff;
+		color: #7e22ce;
+		border-left-color: #d8b4fe;
 	}
 
 	.fx-icon {
@@ -260,54 +256,42 @@
 		vertical-align: sub;
 	}
 
-	/* Preview bar */
 	.expr-preview {
 		font-size: 0.72rem;
 		font-family: 'JetBrains Mono', monospace;
 		padding: 0.2rem 0.4rem;
-		background: oklch(16% 0.03 270);
+		background: #f9fafb;
 		border-radius: 4px;
-		border: 1px solid oklch(28% 0.06 270);
-		color: oklch(75% 0.04 270);
+		border: 1px solid #e5e7eb;
+		color: #4b5563;
 		line-height: 1.5;
 		word-break: break-all;
 	}
 
 	.preview-label {
-		color: oklch(50% 0.04 270);
+		color: #9ca3af;
 		margin-right: 0.3rem;
 		font-style: italic;
 	}
 
-	:global(.preview-resolved) {
-		color: oklch(75% 0.2 140);
-		font-weight: 600;
-	}
+	:global(.preview-resolved) { color: #059669; font-weight: 600; }
+	:global(.preview-missing) { color: #ef4444; text-decoration: underline dotted; }
+	:global(.preview-pending) { color: #8b5cf6; }
 
-	:global(.preview-missing) {
-		color: oklch(60% 0.2 30);
-		text-decoration: underline dotted;
-	}
-
-	:global(.preview-pending) {
-		color: oklch(70% 0.2 310);
-	}
-
-	/* Autocomplete */
 	.autocomplete-dropdown {
 		position: absolute;
 		top: 100%;
 		left: 0;
 		right: 0;
 		z-index: 100;
-		background: oklch(18% 0.04 270);
-		border: 1px solid oklch(35% 0.1 310);
+		background: #ffffff;
+		border: 1px solid #e5e7eb;
 		border-radius: 6px;
 		overflow: hidden;
-		box-shadow: 0 8px 32px oklch(5% 0.02 270 / 0.8);
+		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 		max-height: 220px;
 		overflow-y: auto;
-		margin-top: 2px;
+		margin-top: 4px;
 	}
 
 	.autocomplete-group {
@@ -315,10 +299,10 @@
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
-		color: oklch(55% 0.15 310);
+		color: #6b7280;
 		padding: 0.4rem 0.6rem 0.2rem;
-		background: oklch(15% 0.04 270);
-		border-bottom: 1px solid oklch(25% 0.06 270);
+		background: #f9fafb;
+		border-bottom: 1px solid #f3f4f6;
 	}
 
 	.autocomplete-item {
@@ -327,13 +311,13 @@
 		text-align: left;
 		background: transparent;
 		border: none;
-		padding: 0.35rem 0.7rem;
+		padding: 0.4rem 0.7rem;
 		font-size: 0.75rem;
 		font-family: 'JetBrains Mono', monospace;
-		color: oklch(80% 0.08 270);
+		color: #374151;
 		cursor: pointer;
 		transition: background 0.1s;
-		border-bottom: 1px solid oklch(22% 0.04 270);
+		border-bottom: 1px solid #f3f4f6;
 	}
 
 	.autocomplete-item:last-child {
@@ -341,7 +325,7 @@
 	}
 
 	.autocomplete-item:hover {
-		background: oklch(25% 0.1 310);
-		color: oklch(90% 0.2 310);
+		background: #f3e8ff;
+		color: #6b21a8;
 	}
 </style>

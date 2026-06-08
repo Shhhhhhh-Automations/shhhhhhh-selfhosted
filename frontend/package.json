@@ -26,6 +26,8 @@
 		"vite": "^5.2.10"
 	},
 	"dependencies": {
-		"@xyflow/svelte": "^1.6.0"
+		"@xyflow/svelte": "^1.6.0",
+		"clsx": "^2.1.1",
+		"tailwind-merge": "^3.6.0"
 	}
 }

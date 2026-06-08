@@ -11,12 +11,15 @@ export interface NodeExecutionInput {
 	data: Record<string, any>;
 	previousData?: any;
 	context: ExecutionContext;
+	workflowNodes?: Array<any>;
+	workflowEdges?: Array<any>;
 }
 
 export interface NodeExecutionOutput {
 	success: boolean;
 	data?: any;
 	error?: string;
+	branch?: string | number;
 }
 
 export async function executeIsolatedNode(input: NodeExecutionInput): Promise<NodeExecutionOutput> {
@@ -29,40 +32,6 @@ export async function executeIsolatedNode(input: NodeExecutionInput): Promise<No
 	} catch (error: any) {
 		return { success: false, error: error.message || 'Unknown error' };
 	}
-}
-
-/** Topological sort of workflow nodes using edges */
-function topologicalSort(
-	workflowNodes: Array<{ id: string; type: string; data: string }>,
-	workflowEdges: Array<{ sourceNodeId: string; targetNodeId: string }>,
-): Array<{ id: string; type: string; data: string }> {
-	const inDegree: Record<string, number> = {};
-	const adjacency: Record<string, string[]> = {};
-
-	for (const node of workflowNodes) {
-		inDegree[node.id] = 0;
-		adjacency[node.id] = [];
-	}
-	for (const edge of workflowEdges) {
-		inDegree[edge.targetNodeId] = (inDegree[edge.targetNodeId] || 0) + 1;
-		adjacency[edge.sourceNodeId].push(edge.targetNodeId);
-	}
-
-	const queue = workflowNodes.filter((n) => inDegree[n.id] === 0);
-	const sorted: Array<{ id: string; type: string; data: string }> = [];
-
-	while (queue.length > 0) {
-		const node = queue.shift()!;
-		sorted.push(node);
-		for (const neighborId of adjacency[node.id]) {
-			inDegree[neighborId]--;
-			if (inDegree[neighborId] === 0) {
-				queue.push(workflowNodes.find((n) => n.id === neighborId)!);
-			}
-		}
-	}
-
-	return sorted;
 }
 
 /** Load global variables for a workflow from the DB */
@@ -85,6 +54,8 @@ async function executeNode(
 	node: { id: string; type: string; data: string },
 	ctx: ExecutionContext,
 	incomingEdge: { sourceNodeId: string } | undefined,
+	workflowNodes?: Array<any>,
+	workflowEdges?: Array<any>,
 ): Promise<Record<string, any>> {
 	const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
 	const evaluatedData = evaluateTemplatesInObject(rawData, ctx);
@@ -116,7 +87,7 @@ async function executeNode(
 		};
 	}
 
-	const result = await executor({ nodeId: node.id, type: node.type, data: evaluatedData, previousData, context: ctx });
+	const result = await executor({ nodeId: node.id, type: node.type, data: evaluatedData, previousData, context: ctx, workflowNodes, workflowEdges });
 	const finishedAt = new Date().toISOString();
 
 	const nodeOutput = {
@@ -140,18 +111,75 @@ async function executeNode(
 		label,
 		startedAt,
 		finishedAt,
+		branch: result.branch,
 	};
 }
 
+/** 
+ * Shared graph execution engine based on BFS queue 
+ * Supports dynamic branching via edge handles.
+ */
+async function executeGraph(
+	startNodes: Array<{ id: string; type: string; data: string }>,
+	workflowNodes: Array<{ id: string; type: string; data: string }>,
+	workflowEdges: Array<{ sourceNodeId: string; targetNodeId: string; sourceHandle?: string | null }>,
+	ctx: ExecutionContext,
+	executionResult: Record<string, any>
+) {
+	// Queue holds the node to execute, and the incoming edge that triggered it
+	const queue: Array<{ node: any, incomingEdge?: any }> = startNodes.map(n => ({ node: n }));
+	const executed = new Set<string>();
+
+	while (queue.length > 0) {
+		const { node, incomingEdge } = queue.shift()!;
+		
+		// If already executed (prevent infinite loops in cycles)
+		if (executed.has(node.id)) continue;
+		executed.add(node.id);
+
+		const nodeRecord = await executeNode(node, ctx, incomingEdge, workflowNodes, workflowEdges);
+		executionResult[node.id] = nodeRecord;
+
+		if (!nodeRecord.success && !nodeRecord.skipped) {
+			const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
+			throw new Error(`Node '${rawData.label || node.id}' failed: ${nodeRecord.error}`);
+		}
+
+		// Find outgoing edges. If node returned a specific branch, only follow edges matching that branch's sourceHandle
+		const branch = nodeRecord.branch;
+		
+		const outgoingEdges = workflowEdges.filter(e => {
+			if (e.sourceNodeId !== node.id) return false;
+			if (branch !== undefined) {
+				return String(e.sourceHandle) === String(branch);
+			}
+			return true; // No specific branch, follow all
+		});
+
+		for (const edge of outgoingEdges) {
+			const targetNode = workflowNodes.find(n => n.id === edge.targetNodeId);
+			if (targetNode) {
+				queue.push({ node: targetNode, incomingEdge: edge });
+			}
+		}
+	}
+}
+
 /** Run a full workflow and persist the execution result */
-export async function runWorkflow(workflowId: string, triggerPayload: any = {}): Promise<string> {
-	const executionId = crypto.randomUUID();
+export async function runWorkflow(workflowId: string, triggerPayload: any = {}, predefinedExecutionId?: string): Promise<string> {
+	const executionId = predefinedExecutionId || crypto.randomUUID();
+	// If predefinedExecutionId was provided, it might have already been inserted as 'pending' by the route handler.
+	// We do an upsert or just an update if it exists, or insert if it doesn't.
+	// Actually, doing insert ... on conflict do update status='running' is safest in SQLite.
 	await db.insert(executions).values({
 		id: executionId,
 		workflowId,
 		status: 'running',
 		triggerPayload: JSON.stringify(triggerPayload),
 		startedAt: new Date().toISOString(),
+	}).onConflictDoUpdate({
+		target: executions.id,
+		set: { status: 'running', startedAt: new Date().toISOString() }
 	});
 
 	let executionResult: Record<string, any> = {};
@@ -165,18 +193,19 @@ export async function runWorkflow(workflowId: string, triggerPayload: any = {}):
 		const vars = await loadWorkflowVars(workflowId);
 		const ctx = createContext(executionId, workflowId, triggerPayload, vars);
 
-		const sorted = topologicalSort(workflowNodes, workflowEdges);
+		// Trigger nodes are nodes with no incoming edges
+		const inDegree: Record<string, number> = {};
+		for (const n of workflowNodes) inDegree[n.id] = 0;
+		for (const e of workflowEdges) inDegree[e.targetNodeId] = (inDegree[e.targetNodeId] || 0) + 1;
+		
+		const startNodes = workflowNodes.filter((n) => inDegree[n.id] === 0);
 
-		for (const node of sorted) {
-			const incomingEdge = workflowEdges.find((e) => e.targetNodeId === node.id);
-			const nodeRecord = await executeNode(node, ctx, incomingEdge);
-			executionResult[node.id] = nodeRecord;
-
-			if (!nodeRecord.success && !nodeRecord.skipped) {
-				const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
-				throw new Error(`Node '${rawData.label || node.id}' failed: ${nodeRecord.error}`);
-			}
+		if (startNodes.length === 0) {
+			// If there's a cycle and no clear start node, just pick the first one to avoid hanging
+			startNodes.push(workflowNodes[0]);
 		}
+
+		await executeGraph(startNodes, workflowNodes, workflowEdges, ctx, executionResult);
 
 		await db
 			.update(executions)
@@ -207,14 +236,18 @@ export async function runWorkflowFromNode(
 	workflowId: string,
 	startNodeId: string,
 	triggerPayload: any = {},
+	predefinedExecutionId?: string
 ): Promise<string> {
-	const executionId = crypto.randomUUID();
+	const executionId = predefinedExecutionId || crypto.randomUUID();
 	await db.insert(executions).values({
 		id: executionId,
 		workflowId,
 		status: 'running',
 		triggerPayload: JSON.stringify(triggerPayload),
 		startedAt: new Date().toISOString(),
+	}).onConflictDoUpdate({
+		target: executions.id,
+		set: { status: 'running', startedAt: new Date().toISOString() }
 	});
 
 	let executionResult: Record<string, any> = {};
@@ -223,44 +256,13 @@ export async function runWorkflowFromNode(
 		const workflowNodes = await db.select().from(nodes).where(eq(nodes.workflowId, workflowId)).all();
 		const workflowEdges = await db.select().from(edges).where(eq(edges.workflowId, workflowId)).all();
 
-		const adjacency: Record<string, string[]> = {};
-		for (const n of workflowNodes) adjacency[n.id] = [];
-		for (const e of workflowEdges) {
-			adjacency[e.sourceNodeId] = adjacency[e.sourceNodeId] || [];
-			adjacency[e.sourceNodeId].push(e.targetNodeId);
-		}
-
-		const reachable = new Set<string>();
-		const queue = [startNodeId];
-		while (queue.length) {
-			const cur = queue.shift()!;
-			if (reachable.has(cur)) continue;
-			reachable.add(cur);
-			for (const nb of adjacency[cur] || []) queue.push(nb);
-		}
-
-		const subsetNodes = workflowNodes.filter((n) => reachable.has(n.id));
-		const subsetEdges = workflowEdges.filter(
-			(e) => reachable.has(e.sourceNodeId) && reachable.has(e.targetNodeId),
-		);
-
-		if (subsetNodes.length === 0) throw new Error('No nodes reachable from start node');
+		const startNode = workflowNodes.find(n => n.id === startNodeId);
+		if (!startNode) throw new Error(`Start node ${startNodeId} not found`);
 
 		const vars = await loadWorkflowVars(workflowId);
 		const ctx = createContext(executionId, workflowId, triggerPayload, vars);
 
-		const sorted = topologicalSort(subsetNodes, subsetEdges);
-
-		for (const node of sorted) {
-			const incomingEdge = subsetEdges.find((e) => e.targetNodeId === node.id);
-			const nodeRecord = await executeNode(node, ctx, incomingEdge);
-			executionResult[node.id] = nodeRecord;
-
-			if (!nodeRecord.success && !nodeRecord.skipped) {
-				const rawData = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
-				throw new Error(`Node '${rawData.label || node.id}' failed: ${nodeRecord.error}`);
-			}
-		}
+		await executeGraph([startNode], workflowNodes, workflowEdges, ctx, executionResult);
 
 		await db
 			.update(executions)

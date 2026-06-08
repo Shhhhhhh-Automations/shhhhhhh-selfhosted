@@ -6,83 +6,89 @@ import { apiFetch } from '$lib/api/client';
 import { useHistory } from '$lib/hooks/useHistory.svelte';
 import { useWorkflow } from '$lib/hooks/useWorkflow.svelte';
 import ActionNode from './nodes/ActionNode.svelte';
+import ConditionNode from './nodes/ConditionNode.svelte';
+import CodeNode from './nodes/CodeNode.svelte';
+import ExecuteWorkflowNode from './nodes/ExecuteWorkflowNode.svelte';
+import AgentNode from './nodes/AgentNode.svelte';
 import VariablePanel from './VariablePanel.svelte';
 import TriggerNode from './nodes/TriggerNode.svelte';
 
 let { class: className = '', workflowId = 'preview-workflow-1' } = $props();
 
-// Custom node types registry - map plugin types to visual components
 const nodeTypes = {
 	webhook: TriggerNode,
 	'http-request': ActionNode,
 	slack: ActionNode,
 	log: ActionNode,
-	// fallback visual types
+	if: ConditionNode,
+	code: CodeNode,
+	'execute-workflow': ExecuteWorkflowNode,
+	'ai-agent': AgentNode,
 	trigger: TriggerNode,
 	action: ActionNode,
 };
 
-// Simple catalog for adding nodes via the picker
 const catalog = [
 	{
 		id: 'webhook',
-		label: 'Webhook (Trigger)',
-		typeLabel: 'Webhook',
-		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v14" /><path d="M12 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M12 7c-2.333 -3.333 -4.667 -5 -7 -5" /><path d="M12 7c2.333 -3.333 4.667 -5 7 -5" /></svg>',
+		label: 'Webhook',
+		typeLabel: 'Trigger',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v14" /><path d="M12 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M12 7c-2.333 -3.333 -4.667 -5 -7 -5" /><path d="M12 7c2.333 -3.333 4.667 -5 7 -5" /></svg>',
 	},
 	{
 		id: 'http-request',
-		label: 'HTTP Request (Action)',
-		typeLabel: 'HTTP Request',
-		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12h18" /><path d="M12 3v18" /></svg>',
+		label: 'HTTP Request',
+		typeLabel: 'Action',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12h18" /><path d="M12 3v18" /></svg>',
 	},
 	{
 		id: 'slack',
-		label: 'Slack (Action)',
-		typeLabel: 'Slack',
-		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg>',
+		label: 'Slack',
+		typeLabel: 'Action',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg>',
 	},
 	{
 		id: 'log',
-		label: 'Log (Action)',
-		typeLabel: 'Log',
-		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>',
+		label: 'Log',
+		typeLabel: 'Action',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>',
 	},
+	{
+		id: 'if',
+		label: 'IF Condition',
+		typeLabel: 'Logic',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><path d="M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M15 6a9 9 0 0 0-9 9"/></svg>',
+	},
+	{
+		id: 'code',
+		label: 'JS Code',
+		typeLabel: 'Action',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>',
+	},
+	{
+		id: 'ai-agent',
+		label: 'AI Agent',
+		typeLabel: 'AI',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 3l6 0" /><path d="M12 9l0 12" /><path d="M12 9c-2.333 -3.333 -4.667 -5 -7 -5" /><path d="M12 9c2.333 -3.333 4.667 -5 7 -5" /></svg>'
+	}
 ];
 
-// Instantiate hooks for workflow state and history playback
 const wf = useWorkflow(workflowId);
 const history = useHistory(workflowId, wf);
 
-let isPickerOpen = $state(false);
-let isVarPanelOpen = $state(false);
-
-// Aurora effect tracking
-let mouseX = $state(50);
-let mouseY = $state(50);
-
-// Playground State
 let selectedNode = $state<any>(null);
-let isPlaygroundOpen = $state(false);
 let testOutput = $state<string | null>(null);
 let isTesting = $state(false);
-let playgroundTab = $state<'params' | 'output'>('output');
+let isVarPanelOpen = $state(false);
+let searchQuery = $state('');
 
 onMount(async () => {
 	await wf.load();
 });
 
-function handleMouseMove(e: MouseEvent) {
-	const target = e.currentTarget as HTMLElement;
-	const rect = target.getBoundingClientRect();
-	mouseX = ((e.clientX - rect.left) / rect.width) * 100;
-	mouseY = ((e.clientY - rect.top) / rect.height) * 100;
-}
-
 function onNodeClick(event: CustomEvent | any) {
 	const node = event.detail ? event.detail.node : event.node;
 	selectedNode = node;
-	isPlaygroundOpen = true;
 	testOutput = null;
 }
 
@@ -90,50 +96,26 @@ let hasLoaded = $state(false);
 let hasLoadedEdges = $state(false);
 
 $effect(() => {
-	// Deeply track nodes positions and identities
 	const _positions = wf.nodes.map((n) => ({
 		id: n.id,
 		x: n.position?.x,
 		y: n.position?.y,
 	}));
-
-	if (wf.isLoading) {
-		hasLoaded = false;
-		return;
-	}
-
-	if (!hasLoaded) {
-		hasLoaded = true;
-		return;
-	}
-
+	if (wf.isLoading) { hasLoaded = false; return; }
+	if (!hasLoaded) { hasLoaded = true; return; }
 	if (history.isViewingExecution) return;
-
-	console.log('Autosaving due to nodes change detected by effect');
 	wf.autosaveDebounced();
 });
 
 $effect(() => {
-	// Deeply track edges identities and connections
 	const _edgesState = wf.edges.map((e) => ({
 		id: e.id,
 		source: e.source,
 		target: e.target,
 	}));
-
-	if (wf.isLoading) {
-		hasLoadedEdges = false;
-		return;
-	}
-
-	if (!hasLoadedEdges) {
-		hasLoadedEdges = true;
-		return;
-	}
-
+	if (wf.isLoading) { hasLoadedEdges = false; return; }
+	if (!hasLoadedEdges) { hasLoadedEdges = true; return; }
 	if (history.isViewingExecution) return;
-
-	console.log('Autosaving due to edges change detected by effect');
 	wf.autosaveDebounced();
 });
 
@@ -151,27 +133,10 @@ async function onConnect(e: any) {
 			sourceHandle,
 			targetHandle,
 			animated: true,
-			style: 'stroke: oklch(65% 0.25 310); stroke-width: 2px;',
+			style: 'stroke: #a1a1aa; stroke-width: 2px;',
 		},
 	];
-	try {
-		await wf.save();
-	} catch (err) {
-		console.warn('Failed to save edge', err);
-	}
-}
-
-function closePlayground() {
-	isPlaygroundOpen = false;
-	selectedNode = null;
-}
-
-function openPicker() {
-	isPickerOpen = true;
-}
-
-function closePicker() {
-	isPickerOpen = false;
+	try { await wf.save(); } catch (err) {}
 }
 
 function deleteNode(nodeId: string) {
@@ -179,13 +144,7 @@ function deleteNode(nodeId: string) {
 	wf.edges = wf.edges.filter((e: any) => e.source !== nodeId && e.target !== nodeId);
 	if (selectedNode?.id === nodeId) {
 		selectedNode = null;
-		isPlaygroundOpen = false;
 	}
-	wf.save();
-}
-
-function deleteEdge(edgeId: string) {
-	wf.edges = wf.edges.filter((e: any) => e.id !== edgeId);
 	wf.save();
 }
 
@@ -196,7 +155,7 @@ async function addNodeFromCatalog(item: any) {
 	const newNode = {
 		id: crypto.randomUUID(),
 		type: item.id,
-		position: { x: 100 + xOffset, y: 100 + yOffset },
+		position: { x: 250 + xOffset, y: 150 + yOffset },
 		data: {
 			typeLabel: item.typeLabel,
 			label: item.label,
@@ -210,19 +169,13 @@ async function addNodeFromCatalog(item: any) {
 	};
 
 	wf.nodes = [...wf.nodes, newNode];
-	isPickerOpen = false;
-	try {
-		await wf.save();
-	} catch (e) {
-		console.warn('Auto-save failed after adding node', e);
-	}
+	try { await wf.save(); } catch (e) {}
 }
 
 async function testNode() {
 	if (!selectedNode) return;
 	isTesting = true;
 	testOutput = null;
-
 	try {
 		const response = await apiFetch('/engine/test-node', {
 			method: 'POST',
@@ -232,7 +185,6 @@ async function testNode() {
 				data: selectedNode.data,
 			}),
 		});
-
 		testOutput = JSON.stringify(response, null, 2);
 	} catch (e: any) {
 		testOutput = JSON.stringify({ error: e.message }, null, 2);
@@ -246,19 +198,6 @@ async function triggerWorkflowExecute() {
 		const failedNode = wf.nodes.find((n) => n.data.status === 'failed');
 		if (failedNode) {
 			selectedNode = failedNode;
-			isPlaygroundOpen = true;
-			playgroundTab = 'output';
-		}
-	});
-}
-
-async function triggerNodeExecute() {
-	if (!selectedNode) return;
-	await wf.executeFromNode(selectedNode.id, (execRecord) => {
-		const updatedNode = wf.nodes.find((n) => n.id === selectedNode.id);
-		if (updatedNode) {
-			selectedNode = updatedNode;
-			playgroundTab = 'output';
 		}
 	});
 }
@@ -268,8 +207,6 @@ function handleViewExecution(exec: any) {
 		const failedNode = wf.nodes.find((n) => n.id === failedNodeId);
 		if (failedNode) {
 			selectedNode = failedNode;
-			isPlaygroundOpen = true;
-			playgroundTab = 'output';
 		}
 	});
 }
@@ -279,493 +216,318 @@ function handleExitExecutionView() {
 		selectedNode = node;
 	});
 }
+
+let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().includes(searchQuery.toLowerCase())));
 </script>
 
-<div
-	class="relative w-full h-full overflow-hidden rounded-[40px] bg-background border border-white/10 {className}"
-	onmousemove={handleMouseMove}
-	role="presentation"
->
-	<!-- Aurora Background Layer -->
-	<div
-		class="bg-aurora absolute inset-0 opacity-50 transition-all duration-300 ease-out pointer-events-none z-0"
-		style="--x: {mouseX}%; --y: {mouseY}%;"
-	></div>
+<div class="flex flex-col h-full w-full bg-[#fdfdfd] text-[#1a1a1a] font-sans overflow-hidden {className}">
 	
-	<!-- Mesh Gradient Secondary -->
-	<div
-		class="absolute top-0 right-0 w-[60%] h-[60%] bg-accent1/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none z-0"
-	></div>
-
-	<!-- Canvas Header Actions -->
-	<div class="absolute top-6 left-6 z-20">
-		<a 
-			href="/dashboard"
-			class="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 text-white/70 rounded-full font-bold text-sm hover:bg-white/10 hover:text-white transition-colors"
-		>
-			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
-			Back to Dashboard
-		</a>
-	</div>
-
-	<!-- Execution View Mode Banner -->
-	{#if history.isViewingExecution}
-		<div class="absolute top-6 left-1/2 -translate-x-1/2 z-30 bg-black/80 border border-primary/50 backdrop-blur-md px-6 py-2.5 rounded-full flex items-center gap-4 shadow-[0_0_30px_rgba(var(--primary),0.25)]">
-			<div class="flex items-center gap-2 text-sm text-white font-medium">
-				<span class="h-2 w-2 rounded-full animate-pulse bg-primary"></span>
-				Viewing Run: <span class="font-mono text-accent1 truncate max-w-[120px]">{history.selectedExecution?.id}</span>
-				<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ml-1
-					{history.selectedExecution?.status === 'success' ? 'bg-emerald-500/20 text-accent2 border border-accent2/35' : 'bg-red-500/20 text-red-400 border border-red-500/35'}"
-				>
-					{history.selectedExecution?.status}
-				</span>
-			</div>
-			<button 
-				onclick={handleExitExecutionView}
-				class="px-3 py-1 bg-white text-black hover:scale-105 rounded-full font-bold text-xs transition-all"
-			>
-				Exit Playback
-			</button>
+	<!-- Top Navigation -->
+	<header class="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20 shrink-0">
+		<div class="flex items-center gap-6">
+			<a href="/dashboard" class="flex items-center gap-2 hover:opacity-70 transition-opacity">
+				<div class="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-bold">SH</div>
+			</a>
+			<nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
+				<a href="/dashboard" class="hover:text-black transition-colors">Recipes</a>
+				<a href="/dashboard" class="text-black transition-colors">Dashboard</a>
+				<a href="#" class="hover:text-black transition-colors">App Connections</a>
+				<a href="#" class="hover:text-black transition-colors">Tools</a>
+				<a href="#" class="hover:text-black transition-colors">Community Library</a>
+			</nav>
 		</div>
-	{/if}
+		
+		<div class="flex items-center gap-4">
+			<div class="bg-gray-100 rounded-lg p-1 flex items-center text-sm font-medium">
+				<button class="px-4 py-1.5 bg-white shadow-sm rounded-md text-black">Build</button>
+				<button onclick={history.toggle} class="px-4 py-1.5 text-gray-500 hover:text-black transition-colors">History</button>
+			</div>
 
-	<div class="absolute top-6 right-6 z-20 flex items-center gap-3 transition-all duration-500 {isPlaygroundOpen ? 'mr-[35%]' : ''}">
-		{#if !history.isViewingExecution}
+			<div class="h-6 w-px bg-gray-200 mx-2"></div>
+
 			<button 
 				onclick={wf.save}
 				disabled={wf.isSaving || wf.isExecuting}
-				class="px-5 py-2 bg-black/40 backdrop-blur-md border border-white/10 text-white rounded-full font-bold text-sm hover:bg-white/10 transition-colors disabled:opacity-50"
+				class="text-sm font-medium text-gray-600 hover:text-black transition-colors disabled:opacity-50"
 			>
 				{wf.isSaving ? 'Saving...' : 'Save'}
 			</button>
-
+			
 			<button 
 				onclick={wf.toggleDeploy}
 				disabled={wf.isDeploying || wf.isExecuting}
-				class="flex items-center gap-2 px-5 py-2 {wf.isActive ? 'bg-primary/20 text-primary border-primary/50' : 'bg-white text-black border-transparent'} border rounded-full font-bold text-sm hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(var(--primary),0.15)]"
+				class="px-4 py-2 text-sm font-bold border rounded-lg transition-colors {wf.isActive ? 'border-emerald-500 text-emerald-600 bg-emerald-50' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}"
 			>
-				{#if wf.isDeploying}
-					<div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-					Working...
-				{:else if wf.isActive}
-					<div class="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_currentColor]"></div>
-					Active
-				{:else}
-					Deploy
-				{/if}
+				{wf.isDeploying ? 'Deploying...' : wf.isActive ? 'Active' : 'Deploy'}
 			</button>
 
-			<!-- Execute Workflow Button -->
 			<button 
 				onclick={triggerWorkflowExecute}
 				disabled={wf.isExecuting || wf.isSaving}
-				class="flex items-center gap-2 px-5 py-2 bg-accent1 text-black rounded-full font-bold text-sm hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(var(--accent1),0.25)]"
+				class="px-4 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
 			>
 				{#if wf.isExecuting}
-					<div class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+					<div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
 					Running...
 				{:else}
-					<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16l13 -8z"/></svg>
-					Execute
+					Test Workflow
 				{/if}
 			</button>
-		{/if}
+		</div>
+	</header>
 
-		<!-- History Sidebar Toggle -->
-		<button 
-			onclick={history.toggle}
-			class="px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 text-white/80 rounded-full font-bold text-sm hover:bg-white/10 hover:text-white transition-colors"
-			title="Execution History"
-		>
-			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>
-		</button>
-			
-		{#if !history.isViewingExecution}
-			<!-- Add Node Button -->
-			<button onclick={openPicker} title="Add Node" class="px-4 py-2 bg-primary text-black rounded-full font-bold text-sm hover:scale-105 transition-all">
-				+
-			</button>
-			<!-- Variables Button -->
-			<button
-				onclick={() => { isVarPanelOpen = !isVarPanelOpen; }}
-				class="px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 text-white/80 rounded-full font-bold text-sm hover:bg-white/10 hover:text-white transition-colors"
-				class:!border-primary={isVarPanelOpen}
-				class:text-primary={isVarPanelOpen}
-				title="Variabili globali"
-			>
-				<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"/><path d="M9 12h6M12 9v6"/></svg>
-				$vars
-			</button>
-		{/if}
-	</div>
-
-	<!-- Svelte Flow Canvas -->
-	<div class="absolute inset-0 z-10 transition-all duration-500 {isPlaygroundOpen ? 'w-[65%]' : 'w-full'}">
-		{#if !wf.isLoading}
-			<SvelteFlow 
-				bind:nodes={wf.nodes} 
-				bind:edges={wf.edges} 
-				{nodeTypes} 
-				class="organic-tech-flow"
-				colorMode="dark"
-				onnodeclick={onNodeClick}
-				onconnect={history.isViewingExecution ? undefined : onConnect}
-				nodesDraggable={!history.isViewingExecution}
-				nodesConnectable={!history.isViewingExecution}
-				edgesFocusable={!history.isViewingExecution}
-				elementsSelectable={true}
-			>
-				<Controls 
-					class="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl fill-white" 
-					buttonClass="border-white/10 hover:bg-white/10 fill-white"
-				/>
-			</SvelteFlow>
-		{:else}
-			<div class="flex items-center justify-center h-full w-full">
-				<div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-			</div>
-		{/if}
-	</div>
-
-	<!-- Playground Side Panel -->
-	<div 
-		class="absolute top-0 right-0 h-full w-[35%] bg-black/60 backdrop-blur-2xl border-l border-white/10 transform transition-transform duration-500 ease-out z-20 flex flex-col"
-		style="transform: translateX({isPlaygroundOpen ? '0%' : '100%'})"
-	>
-		{#if selectedNode}
-			<div class="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-				<div class="flex items-center gap-3">
-					<div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-						{@html selectedNode.data.icon}
-					</div>
-					<div>
-						<h3 class="text-lg font-bold tracking-tight">{selectedNode.data.label}</h3>
-						<p class="text-xs text-white/50 uppercase tracking-widest">{selectedNode.data.typeLabel}</p>
-					</div>
+	<div class="flex flex-1 overflow-hidden relative">
+		
+		<!-- Left Sidebar: Node Catalog -->
+		<aside class="w-72 border-r border-gray-200 bg-white flex flex-col z-20 shrink-0">
+			<div class="p-4 border-b border-gray-200">
+				<div class="relative">
+					<svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+					<input 
+						type="text" 
+						bind:value={searchQuery}
+						placeholder="Search connectors..." 
+						class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
+					/>
 				</div>
-				<button aria-label="Close Playground" title="Close Playground" onclick={closePlayground} class="p-2 hover:bg-white/10 rounded-full transition-colors">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
+			</div>
+			<div class="flex-1 overflow-y-auto p-3">
+				<div class="text-[10px] font-bold tracking-wider text-gray-400 uppercase mb-3 px-2">Core Blocks</div>
+				<div class="grid grid-cols-2 gap-2">
+					{#each filteredCatalog as item}
+						<button 
+							onclick={() => addNodeFromCatalog(item)}
+							class="flex flex-col items-center justify-center p-4 gap-3 bg-white hover:bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl transition-all group"
+						>
+							<div class="w-10 h-10 rounded-lg bg-gray-50 group-hover:bg-white border border-gray-100 group-hover:shadow-sm flex items-center justify-center text-gray-600">
+								{@html item.icon}
+							</div>
+							<div class="text-xs font-medium text-center leading-tight text-gray-700">
+								{item.label}
+							</div>
+						</button>
+					{/each}
+				</div>
+			</div>
+			<div class="p-4 border-t border-gray-200 bg-gray-50/50">
+				<button onclick={() => isVarPanelOpen = true} class="w-full py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm text-gray-600">
+					$vars (Variables)
 				</button>
 			</div>
+		</aside>
 
-			<div class="flex-1 overflow-y-auto p-6 space-y-8">
-				{#if selectedNode.data.execution}
-					<!-- Execution Viewer Mode Tabs -->
-					<div class="flex border-b border-white/10 mb-6 bg-white/5 p-1 rounded-xl">
-						<button 
-							onclick={() => playgroundTab = 'params'} 
-							class="flex-1 py-2 rounded-lg text-sm font-bold transition-all {playgroundTab === 'params' ? 'bg-white text-black shadow-md' : 'text-white/60 hover:text-white'}"
+		<!-- Center Canvas -->
+		<main class="flex-1 relative bg-[#f9fafb]">
+			{#if history.isViewingExecution}
+				<div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-white border border-gray-200 shadow-lg px-6 py-2.5 rounded-full flex items-center gap-4">
+					<div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
+						Viewing Run: <span class="font-mono text-gray-500 truncate max-w-[120px]">{history.selectedExecution?.id}</span>
+						<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ml-1
+							{history.selectedExecution?.status === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}"
 						>
-							Parameters
-						</button>
-						<button 
-							onclick={() => playgroundTab = 'output'} 
-							class="flex-1 py-2 rounded-lg text-sm font-bold transition-all {playgroundTab === 'output' ? 'bg-white text-black shadow-md' : 'text-white/60 hover:text-white'}"
-						>
-							Output
-						</button>
+							{history.selectedExecution?.status}
+						</span>
 					</div>
+					<button onclick={handleExitExecutionView} class="px-3 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-full font-bold text-xs transition-colors">
+						Exit Playback
+					</button>
+				</div>
+			{/if}
 
-					{#if playgroundTab === 'params'}
-						<div class="space-y-6">
-							<div>
-								<span class="text-xs font-bold uppercase tracking-widest text-white/40 block mb-2">Evaluated Parameters</span>
-								<pre class="bg-black/50 border border-white/10 rounded-xl p-4 text-xs font-mono text-accent1 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(selectedNode.data.execution.input || {}, null, 2)}</pre>
-							</div>
-							{#if selectedNode.data.execution.previousData}
-								<div>
-									<span class="text-xs font-bold uppercase tracking-widest text-white/40 block mb-2">Incoming Data (Previous Node)</span>
-									<pre class="bg-black/50 border border-white/10 rounded-xl p-4 text-xs font-mono text-white/50 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(selectedNode.data.execution.previousData, null, 2)}</pre>
-								</div>
-							{/if}
+			{#if !wf.isLoading}
+				<SvelteFlow 
+					bind:nodes={wf.nodes} 
+					bind:edges={wf.edges} 
+					{nodeTypes} 
+					colorMode="light"
+					onnodeclick={onNodeClick}
+					onpaneclick={() => selectedNode = null}
+					onconnect={history.isViewingExecution ? undefined : onConnect}
+					nodesDraggable={!history.isViewingExecution}
+					nodesConnectable={!history.isViewingExecution}
+					edgesFocusable={!history.isViewingExecution}
+					elementsSelectable={true}
+					minZoom={0.5}
+					maxZoom={2}
+				>
+					<Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
+					<Controls 
+						class="bg-white border border-gray-200 rounded-lg shadow-sm fill-gray-600" 
+						buttonClass="border-gray-200 hover:bg-gray-50 fill-gray-600"
+					/>
+				</SvelteFlow>
+			{:else}
+				<div class="flex items-center justify-center h-full w-full">
+					<div class="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>
+				</div>
+			{/if}
+		</main>
+
+		<!-- Right Sidebar: Properties Panel -->
+		{#if selectedNode}
+			<aside class="w-80 border-l border-gray-200 bg-white flex flex-col z-20 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+				<div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
+					<div class="flex items-center gap-3">
+						<div class="w-8 h-8 rounded bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-600">
+							{@html selectedNode.data.icon}
 						</div>
-					{:else}
-						<div class="space-y-6">
+						<div>
+							<h3 class="text-sm font-bold text-gray-900">{selectedNode.data.label}</h3>
+							<p class="text-[10px] text-gray-500 uppercase tracking-widest">{selectedNode.data.typeLabel}</p>
+						</div>
+					</div>
+					<button onclick={() => selectedNode = null} class="p-1.5 hover:bg-gray-200 rounded-md transition-colors text-gray-400 hover:text-gray-600">
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+
+				<div class="flex-1 overflow-y-auto p-5 space-y-6">
+					{#if selectedNode.data.execution}
+						<div class="space-y-4">
 							{#if selectedNode.data.execution.error}
-								<div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-sm text-red-400">
-									<span class="font-bold block mb-1">Execution Error</span>
+								<div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
+									<span class="font-bold block mb-1">Error</span>
 									{selectedNode.data.execution.error}
 								</div>
 							{/if}
 							<div>
-								<span class="text-xs font-bold uppercase tracking-widest text-white/40 block mb-2">Output Data</span>
-								<pre class="bg-black/50 border border-white/10 rounded-xl p-4 text-xs font-mono text-accent2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(selectedNode.data.execution.output || {}, null, 2)}</pre>
+								<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">Evaluated Input</span>
+								<pre class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto">{JSON.stringify(selectedNode.data.execution.input || {}, null, 2)}</pre>
+							</div>
+							<div>
+								<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">Output Data</span>
+								<pre class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono text-emerald-700 overflow-x-auto">{JSON.stringify(selectedNode.data.execution.output || {}, null, 2)}</pre>
+							</div>
+						</div>
+					{:else}
+						<div class="space-y-4">
+							<div class="space-y-3">
+								<label class="block">
+									<span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Node Name</span>
+									<input 
+										type="text" 
+										bind:value={selectedNode.data.label} 
+										oninput={wf.autosaveDebounced}
+										class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/5" 
+									/>
+								</label>
+
+								<!-- HTTP Request Config -->
+								{#if selectedNode.type === 'http-request'}
+									<label class="block">
+										<span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">URL</span>
+										<input 
+											type="text" 
+											bind:value={selectedNode.data.url} 
+											oninput={wf.autosaveDebounced}
+											class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/5" 
+										/>
+									</label>
+									<label class="block">
+										<span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Method</span>
+										<select 
+											bind:value={selectedNode.data.method} 
+											onchange={wf.autosaveDebounced}
+											class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/5"
+										>
+											<option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+										</select>
+									</label>
+								{/if}
+
+								<!-- Webhook -->
+								{#if selectedNode.type === 'webhook'}
+									{#if selectedNode.data.webhookPath}
+										<label class="block">
+											<span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Webhook Path</span>
+											<input type="text" value={selectedNode.data.webhookPath} readonly class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500 outline-none" />
+										</label>
+									{/if}
+								{/if}
+								
+								<!-- Slack -->
+								{#if selectedNode.type === 'slack'}
+									<label class="block">
+										<span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Message</span>
+										<textarea 
+											bind:value={selectedNode.data.message} 
+											oninput={wf.autosaveDebounced}
+											rows="3" 
+											class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/5"
+										></textarea>
+									</label>
+								{/if}
 							</div>
 						</div>
 					{/if}
-				{:else}
-					<!-- Normal Editor Mode -->
-					<div class="space-y-4">
-						<h4 class="text-sm font-bold tracking-widest uppercase text-white/40">Configuration</h4>
-						<div class="space-y-3">
-							<label class="block">
-								<span class="block text-sm text-white/70 mb-1">Node Name</span>
-								<input 
-									type="text" 
-									bind:value={selectedNode.data.label} 
-									oninput={wf.autosaveDebounced}
-									class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors" 
-								/>
-							</label>
+				</div>
 
-							<!-- HTTP Request Config -->
-							{#if selectedNode.type === 'http-request'}
-								<label class="block">
-									<span class="block text-sm text-white/70 mb-1">URL</span>
-									<input 
-										type="text" 
-										bind:value={selectedNode.data.url} 
-										oninput={wf.autosaveDebounced}
-										placeholder="https://api.example.com" 
-										class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors" 
-									/>
-								</label>
-								<label class="block">
-									<span class="block text-sm text-white/70 mb-1">Method</span>
-									<select 
-										bind:value={selectedNode.data.method} 
-										onchange={wf.autosaveDebounced}
-										class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
-									>
-										<option>GET</option>
-										<option>POST</option>
-										<option>PUT</option>
-										<option>PATCH</option>
-										<option>DELETE</option>
-									</select>
-								</label>
-								<label class="block">
-									<span class="block text-sm text-white/70 mb-1">Headers (JSON)</span>
-									<textarea 
-										bind:value={selectedNode.data.headers} 
-										oninput={wf.autosaveDebounced}
-										rows="3" 
-										placeholder="Authorization: Bearer token" 
-										class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
-									></textarea>
-								</label>
-								<label class="block">
-									<span class="block text-sm text-white/70 mb-1">Request Body (JSON)</span>
-									<textarea 
-										bind:value={selectedNode.data.body} 
-										oninput={wf.autosaveDebounced}
-										rows="3" 
-										placeholder={'{ "key": "value" }'} 
-										class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
-									></textarea>
-								</label>
-							{/if}
-
-							<!-- Slack Config -->
-							{#if selectedNode.type === 'slack'}
-								<label class="block">
-									<span class="block text-sm text-white/70 mb-1">Webhook URL</span>
-									<input 
-										type="text" 
-										bind:value={selectedNode.data.webhookUrl} 
-										oninput={wf.autosaveDebounced}
-										placeholder="https://hooks.slack.com/services/..." 
-										class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors" 
-									/>
-								</label>
-								<label class="block">
-									<span class="block text-sm text-white/70 mb-1">Message</span>
-									<textarea 
-										bind:value={selectedNode.data.message} 
-										oninput={wf.autosaveDebounced}
-										rows="3" 
-										placeholder="Enter your message..." 
-										class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
-									></textarea>
-								</label>
-							{/if}
-
-							<!-- Log Config -->
-							{#if selectedNode.type === 'log'}
-								<label class="block">
-									<span class="block text-sm text-white/70 mb-1">Message</span>
-									<textarea 
-										bind:value={selectedNode.data.message} 
-										oninput={wf.autosaveDebounced}
-										rows="3" 
-										placeholder="What to log..." 
-										class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
-									></textarea>
-								</label>
-							{/if}
-
-							<!-- Webhook Config -->
-							{#if selectedNode.type === 'webhook'}
-								{#if selectedNode.data.webhookPath}
-									<label class="block">
-										<span class="block text-sm text-white/70 mb-1">Webhook Path</span>
-										<div class="flex items-center gap-2">
-											<input type="text" value={selectedNode.data.webhookPath} readonly class="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white/50 focus:outline-none cursor-not-allowed" />
-											<button onclick={() => navigator.clipboard.writeText(selectedNode.data.webhookPath)} class="px-3 py-2 bg-white/10 border border-white/10 rounded-lg text-white/70 hover:bg-white/20">Copy</button>
-										</div>
-									</label>
-								{:else}
-									<p class="text-sm text-white/40 italic">Webhook path will be generated when deployed.</p>
-								{/if}
-							{/if}
-						</div>
-					</div>
-
-					<!-- Execution Output -->
-					<div class="space-y-4">
-						<h4 class="text-sm font-bold tracking-widest uppercase text-white/40">Isolation Test Result</h4>
-						
-						{#if testOutput}
-							<div class="relative bg-black/80 border border-white/10 rounded-xl p-4 overflow-hidden group">
-								<pre class="text-xs text-accent2 font-mono overflow-x-auto whitespace-pre-wrap">{testOutput}</pre>
-							</div>
-						{:else}
-							<div class="flex items-center justify-center p-8 border border-dashed border-white/10 rounded-xl">
-								<p class="text-sm text-white/30 italic">No output yet. Run the node to test.</p>
-							</div>
-						{/if}
-					</div>
-				{/if}
-			</div>
-
-			<!-- Sticky Footer Actions -->
-			<div class="p-6 border-t border-white/10 bg-black/40 mt-auto space-y-2.5">
-				{#if !history.isViewingExecution}
+				<div class="p-5 border-t border-gray-200 bg-gray-50/50 space-y-2">
 					<button 
 						onclick={testNode}
 						disabled={isTesting || wf.isExecuting}
-						class="w-full group relative flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-bold hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100"
+						class="w-full py-2.5 bg-white border border-gray-200 text-black rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2"
 					>
 						{#if isTesting}
-							<div class="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-							Running...
+							<div class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
 						{:else}
-							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>
-							Test Node in Isolation
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16l13 -8z" /></svg>
 						{/if}
+						Test Node
 					</button>
-
-					<button 
-						onclick={triggerNodeExecute}
-						disabled={wf.isExecuting || isTesting}
-						class="w-full flex items-center justify-center gap-2 px-6 py-3 bg-accent1/20 text-accent1 border border-accent1/35 rounded-xl font-bold hover:bg-accent1/30 transition-all disabled:opacity-50"
-					>
-						{#if wf.isExecuting}
-							<div class="w-5 h-5 border-2 border-accent1 border-t-transparent rounded-full animate-spin"></div>
-							Running...
-						{:else}
-							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>
-							Run From This Node
-						{/if}
-					</button>
-
 					<button 
 						onclick={() => deleteNode(selectedNode.id)}
-						class="w-full px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl font-bold hover:bg-red-500/25 transition-all"
+						class="w-full py-2 text-red-600 text-sm font-medium hover:bg-red-50 rounded-lg transition-colors"
 					>
-						Delete Node
+						Delete
 					</button>
-				{:else}
-					<div class="text-xs text-white/30 text-center py-2 italic">
-						Workspace is read-only during history playback.
-					</div>
-				{/if}
-			</div>
+				</div>
+			</aside>
 		{/if}
+
+		<!-- Execution History Overlay (Right Sidebar equivalent when open) -->
+		{#if history.isHistoryOpen && !selectedNode}
+			<aside class="w-80 border-l border-gray-200 bg-white flex flex-col z-20 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+				<div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
+					<h3 class="text-sm font-bold text-gray-900">History</h3>
+					<button aria-label="Close History" onclick={history.close} class="p-1.5 hover:bg-gray-200 rounded-md transition-colors text-gray-400">
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+				<div class="flex-1 overflow-y-auto p-3 space-y-2">
+					{#each history.historyList as exec}
+						<button 
+							onclick={() => handleViewExecution(exec)}
+							class="w-full text-left p-3 bg-white hover:bg-gray-50 border {history.selectedExecution?.id === exec.id ? 'border-black ring-1 ring-black/5' : 'border-gray-200'} rounded-xl transition-all shadow-sm"
+						>
+							<div class="flex justify-between items-center gap-2 mb-1">
+								<span class="font-mono text-xs text-gray-500 truncate">{exec.id.split('-')[0]}</span>
+								<span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded
+									{exec.status === 'success' ? 'text-emerald-600 bg-emerald-50' : ''}
+									{exec.status === 'failed' ? 'text-red-600 bg-red-50' : ''}"
+								>{exec.status}</span>
+							</div>
+							<div class="text-[11px] text-gray-400">{new Date(exec.startedAt).toLocaleString()}</div>
+						</button>
+					{/each}
+				</div>
+			</aside>
+		{/if}
+
 	</div>
 </div>
 
-<!-- History Sidebar Drawer -->
-{#if history.isHistoryOpen}
-	<div class="absolute top-0 right-0 h-full w-[35%] bg-black/85 backdrop-blur-2xl border-l border-white/10 z-30 flex flex-col transition-all duration-300">
-		<div class="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-			<h3 class="text-lg font-bold tracking-tight">Execution History</h3>
-			<button aria-label="Close History" onclick={history.close} class="p-2 hover:bg-white/10 rounded-full transition-colors">
-				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-			</button>
-		</div>
-		
-		<div class="flex-1 overflow-y-auto p-6 space-y-3">
-			{#if history.isLoadingHistory}
-				<div class="flex justify-center items-center py-12">
-					<div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-				</div>
-			{:else if history.historyList.length === 0}
-				<div class="text-center text-white/40 italic py-12">No executions found for this workflow.</div>
-			{:else}
-				{#each history.historyList as exec}
-					<button 
-						onclick={() => handleViewExecution(exec)}
-						class="w-full text-left p-4 bg-white/5 hover:bg-white/10 border {history.selectedExecution?.id === exec.id ? 'border-primary shadow-[0_0_15px_rgba(217,70,239,0.15)]' : 'border-white/10'} rounded-2xl transition-all flex flex-col gap-1.5"
-					>
-						<div class="flex justify-between items-center gap-2">
-							<span class="font-mono text-xs text-white/50 truncate max-w-[170px]">{exec.id}</span>
-							<span class="px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider border
-								{exec.status === 'success' ? 'bg-emerald-500/10 border-accent2/30 text-accent2' : ''}
-								{exec.status === 'failed' ? 'bg-red-500/10 border-red-500/30 text-red-400' : ''}
-								{exec.status === 'running' ? 'bg-primary/10 border-primary/30 text-primary animate-pulse' : ''}
-								{exec.status === 'pending' ? 'bg-white/5 border-white/10 text-white/50' : ''}"
-							>
-								{exec.status}
-							</span>
-						</div>
-						<div class="text-xs text-white/70">
-							Started: {new Date(exec.startedAt).toLocaleString()}
-						</div>
-						{#if exec.finishedAt}
-							<div class="text-[11px] text-white/40">
-								Duration: {Math.max(0, Math.round((new Date(exec.finishedAt).getTime() - new Date(exec.startedAt).getTime()) / 1000))}s
-							</div>
-						{/if}
-					</button>
-				{/each}
-			{/if}
-		</div>
-	</div>
+<!-- Variable Panel floating modal fallback -->
+{#if isVarPanelOpen}
+	<VariablePanel
+		variableStore={wf.variableStore}
+		bind:open={isVarPanelOpen}
+		onclose={() => { isVarPanelOpen = false; }}
+	/>
 {/if}
-
-<!-- Node Picker Modal -->
-{#if isPickerOpen}
-	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
-		<div class="bg-black/80 border border-white/10 rounded-2xl p-6 w-[520px]">
-			<h3 class="text-lg font-bold mb-4">Add Node</h3>
-			<div class="grid grid-cols-2 gap-4">
-				{#each catalog as item}
-					<button onclick={() => addNodeFromCatalog(item)} class="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10">
-						<div class="w-10 h-10 rounded bg-white/5 flex items-center justify-center">{@html item.icon}</div>
-						<div class="text-left">
-							<div class="font-bold">{item.label}</div>
-							<div class="text-xs text-white/40">{item.typeLabel}</div>
-						</div>
-					</button>
-				{/each}
-			</div>
-			<div class="mt-6 text-right">
-				<button onclick={closePicker} class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg">Close</button>
-			</div>
-		</div>
-	</div>
-{/if}
-
-<!-- Variable Panel slide-over -->
-<VariablePanel
-	variableStore={wf.variableStore}
-	bind:open={isVarPanelOpen}
-	onclose={() => { isVarPanelOpen = false; }}
-/>
 
 <style>
-	:global(.organic-tech-flow .svelte-flow__pane) {
-		background: transparent !important;
-	}
-	
-	:global(.organic-tech-flow .svelte-flow__edge-path) {
-		stroke-width: 3;
-		opacity: 0.8;
-	}
-
-	:global(.organic-tech-flow .svelte-flow__edge:hover .svelte-flow__edge-path) {
-		stroke-width: 4;
-		opacity: 1;
-	}
+	:global(.svelte-flow__pane) { background: transparent !important; }
+	:global(.svelte-flow__edge-path) { stroke-width: 2; }
+	:global(.svelte-flow__edge:hover .svelte-flow__edge-path) { stroke-width: 3; stroke: #52525b !important; }
 </style>

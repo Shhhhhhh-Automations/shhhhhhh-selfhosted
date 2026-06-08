@@ -180,6 +180,90 @@ export const serviceCatalog: ServiceDefinition[] = [
 			},
 		],
 	},
+	{
+		id: 'if',
+		name: 'IF Condition',
+		description: 'Splits the flow based on a boolean condition (true/false).',
+		category: 'action',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><path d="M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M15 6a9 9 0 0 0-9 9"/></svg>',
+		color: 'oklch(65% 0.2 40)',
+		configSchema: [
+			{
+				key: 'condition',
+				label: 'Condition (evaluates to true/false)',
+				type: 'textarea',
+				placeholder: '{{ $node["HTTP"].data.status === 200 }}',
+				required: true,
+				helpText: 'The workflow will route to the True branch if this evaluates to true, otherwise False.',
+			},
+		],
+	},
+	{
+		id: 'code',
+		name: 'JS Code',
+		description: 'Run custom JavaScript code to manipulate data.',
+		category: 'action',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>',
+		color: 'oklch(75% 0.2 90)',
+		configSchema: [
+			{
+				key: 'code',
+				label: 'JavaScript Code',
+				type: 'textarea',
+				placeholder: 'return { ...$input, updated: true };',
+				required: true,
+				helpText: 'Use $input to access the data from the previous node. Return the new data object.',
+			},
+		],
+	},
+	{
+		id: 'execute-workflow',
+		name: 'Execute Workflow',
+		description: 'Triggers another workflow as a sub-workflow.',
+		category: 'action',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>',
+		color: 'oklch(60% 0.2 250)',
+		configSchema: [
+			{
+				key: 'workflowId',
+				label: 'Workflow ID',
+				type: 'text',
+				placeholder: 'UUID...',
+				required: true,
+			},
+		],
+	},
+	{
+		id: 'ai-agent',
+		name: 'AI Agent',
+		description: 'LLM Agent capable of answering questions and calling connected tools.',
+		category: 'action',
+		icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>',
+		color: 'oklch(60% 0.25 300)',
+		configSchema: [
+			{
+				key: 'prompt',
+				label: 'System Prompt',
+				type: 'textarea',
+				placeholder: 'You are a helpful assistant.',
+				required: true,
+			},
+			{
+				key: 'message',
+				label: 'User Message',
+				type: 'textarea',
+				placeholder: '{{ $input.message }}',
+				required: true,
+			},
+			{
+				key: 'apiKey',
+				label: 'OpenAI API Key',
+				type: 'secret',
+				placeholder: 'sk-...',
+				helpText: 'Leave empty if OPENAI_API_KEY env is set',
+			},
+		],
+	},
 ];
 
 /** Lookup a service by its stable ID */

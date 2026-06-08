@@ -1,6 +1,16 @@
 import { sql } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
+export const users = sqliteTable('users', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	email: text('email').notNull().unique(),
+	passwordHash: text('password_hash').notNull(),
+	role: text('role', { enum: ['admin', 'member'] }).notNull().default('admin'),
+	createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const workflows = sqliteTable('workflows', {
 	id: text('id')
 		.primaryKey()
@@ -78,3 +88,5 @@ export type Edge = typeof edges.$inferSelect;
 export type NewEdge = typeof edges.$inferInsert;
 export type Execution = typeof executions.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;

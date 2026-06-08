@@ -1,0 +1,1 @@
+ALTER TABLE `workflows` ADD `variables` text DEFAULT '{}' NOT NULL;
