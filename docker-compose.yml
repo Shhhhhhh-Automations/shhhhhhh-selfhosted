@@ -1,0 +1,12 @@
+services:
+  shhhhhhh:
+    build: .
+    image: shhhhhhh-selfhosted:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      - PORT=3000
+      - SHHHHHHH_DATA_DIR=/data
+    restart: unless-stopped

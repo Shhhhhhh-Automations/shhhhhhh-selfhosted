@@ -1,0 +1,17 @@
+{
+  "name": "shhhhhhh-automation",
+  "version": "0.1.0",
+  "description": "Quiet operations. Loud automation. Self-hosted platform.",
+  "bin": {
+    "shhhhhhh": "./bin/shhhhhhh.js"
+  },
+  "scripts": {
+    "start": "node ./bin/shhhhhhh.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

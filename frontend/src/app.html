@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-background text-white">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+		<!-- Organic-Tech Grain Overlay -->
+		<svg aria-hidden="true" class="pointer-events-none fixed inset-0 opacity-[0.035] mix-blend-overlay z-50">
+			<filter id="grainy">
+				<feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="3" stitchTiles="stitch" />
+				<feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" />
+			</filter>
+			<rect width="100%" height="100%" filter="url(#grainy)" />
+		</svg>
+	</body>
+</html>

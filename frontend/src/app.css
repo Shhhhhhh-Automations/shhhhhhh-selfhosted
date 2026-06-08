@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		--background: 12% 0.01 280;
+		--primary: 65% 0.25 310;
+		--accent1: 75% 0.2 230;
+		--accent2: 85% 0.25 145;
+	}
+
+	body {
+		@apply bg-background text-white antialiased;
+		font-family: 'Bricolage Grotesque', sans-serif;
+	}
+
+	h1, h2, h3, h4, h5, h6 {
+		@apply font-display tracking-tight;
+	}
+
+	::selection {
+		background-color: oklch(65% 0.25 310 / 0.3);
+	}
+}
+
+@layer utilities {
+	.bg-aurora {
+		background: radial-gradient(
+			circle at var(--x, 50%) var(--y, 50%),
+			oklch(60% 0.18 320) 0%,
+			oklch(50% 0.15 240) 50%,
+			transparent 100%
+		);
+		filter: blur(80px);
+	}
+
+	.glass-node {
+		@apply bg-black/40 backdrop-blur-md border border-white/10;
+	}
+
+	.text-glow {
+		text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+	}
+
+	.bg-mesh {
+		background-image: 
+			radial-gradient(at 0% 0%, oklch(65% 0.25 310 / 0.15) 0px, transparent 50%),
+			radial-gradient(at 100% 100%, oklch(75% 0.2 230 / 0.15) 0px, transparent 50%),
+			radial-gradient(at 50% 50%, oklch(85% 0.25 145 / 0.05) 0px, transparent 50%);
+	}
+}
