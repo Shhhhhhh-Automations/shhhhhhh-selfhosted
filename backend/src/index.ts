@@ -6,6 +6,8 @@ import settingsRouter from './routes/settings';
 import setupRouter from './routes/setup';
 import engineRouter from './routes/engine';
 import workflowsRouter from './routes/workflows';
+import webhooksRouter from './routes/webhooks';
+import executionsRouter from './routes/executions';
 import { migrateDb } from './db';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,6 +33,8 @@ app.route('/api/settings', settingsRouter);
 app.route('/api/setup', setupRouter);
 app.route('/api/engine', engineRouter);
 app.route('/api/workflows', workflowsRouter);
+app.route('/api/webhooks', webhooksRouter);
+app.route('/api/executions', executionsRouter);
 
 // Serve static files using absolute path
 const publicDir = path.join(__dirname, '..', 'public');

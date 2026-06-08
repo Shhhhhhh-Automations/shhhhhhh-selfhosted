@@ -2,7 +2,7 @@ export interface NodeExecutionInput {
 	nodeId: string;
 	type: string;
 	data: Record<string, any>;
-	previousData?: any; // Mock data passed for testing
+	previousData?: any;
 }
 
 export interface NodeExecutionOutput {
@@ -14,49 +14,70 @@ export interface NodeExecutionOutput {
 export type PluginExecutor = (input: NodeExecutionInput) => Promise<NodeExecutionOutput>;
 
 const plugins: Record<string, PluginExecutor> = {
-	// Dummy implementation for the mockup nodes
-	'webhook': async (input) => {
+	webhook: async (input) => {
 		return {
 			success: true,
-			data: {
-				body: { message: "Webhook test payload" },
-				headers: { "content-type": "application/json" }
-			}
+			data: input.previousData || {
+				message: 'Webhook trigger received',
+				timestamp: new Date().toISOString(),
+			},
 		};
 	},
-	'google-docs': async (input) => {
-		return {
-			success: true,
-			data: {
-				documentId: "1A2b3C4d5E6f7G8h9I0j",
-				url: "https://docs.google.com/document/d/1A2b3C4d5E6f7G8h9I0j/edit",
-				title: input.data.label || "Test Document"
+
+	'http-request': async (input) => {
+		const { url, method = 'GET', body, headers } = input.data;
+		if (!url) return { success: false, error: 'URL is required for HTTP Request node' };
+		try {
+			const parsedHeaders = headers ? JSON.parse(headers) : {};
+			const options: RequestInit = {
+				method,
+				headers: { 'Content-Type': 'application/json', ...parsedHeaders },
+			};
+			if (body && ['POST', 'PUT', 'PATCH'].includes(method)) {
+				options.body = typeof body === 'string' ? body : JSON.stringify(body);
 			}
-		};
+			const response = await fetch(url, options);
+			const contentType = response.headers.get('content-type') || '';
+			const data = contentType.includes('application/json')
+				? await response.json()
+				: await response.text();
+			return {
+				success: response.ok,
+				data: { status: response.status, statusText: response.statusText, data },
+				...(response.ok ? {} : { error: `HTTP ${response.status}: ${response.statusText}` }),
+			};
+		} catch (err: any) {
+			return { success: false, error: err.message };
+		}
 	},
-	'slack': async (input) => {
-		return {
-			success: true,
-			data: {
-				channel: "#general",
-				ts: "1234567890.123456",
-				message: "Sent successfully"
-			}
-		};
-	}
+
+	slack: async (input) => {
+		const { webhookUrl, message } = input.data;
+		if (!webhookUrl) return { success: false, error: 'Slack Webhook URL is required' };
+		if (!message) return { success: false, error: 'Message is required' };
+		try {
+			const response = await fetch(webhookUrl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ text: message }),
+			});
+			const responseText = await response.text();
+			if (!response.ok) return { success: false, error: `Slack error: ${responseText}` };
+			return { success: true, data: { sent: true, message } };
+		} catch (err: any) {
+			return { success: false, error: err.message };
+		}
+	},
+
+	log: async (input) => {
+		const { message } = input.data;
+		const logMessage = `[shhhhhhh:log] ${message}`;
+		console.log(logMessage);
+		return { success: true, data: { logged: message, timestamp: new Date().toISOString() } };
+	},
 };
 
 export function getPlugin(type: string): PluginExecutor | undefined {
-	// Fallback mechanism mapping the typeLabel to internal plugin keys
-	// In a real system, the 'type' field of the node would match the registry directly
 	const mappedType = type.toLowerCase().replace(/\s+/g, '-');
-	
-	if (plugins[mappedType]) return plugins[mappedType];
-	
-	// Try finding by mapping common labels
-	if (type.includes('Webhook')) return plugins['webhook'];
-	if (type.includes('Google Docs')) return plugins['google-docs'];
-	if (type.includes('Slack')) return plugins['slack'];
-
-	return undefined;
+	return plugins[mappedType] ?? plugins[type];
 }

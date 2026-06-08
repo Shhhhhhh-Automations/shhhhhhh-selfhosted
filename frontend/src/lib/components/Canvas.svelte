@@ -9,68 +9,33 @@
 
 	let { class: className = '', workflowId = 'preview-workflow-1' } = $props();
 
-	// Custom node types registry
+	// Custom node types registry - map plugin types to visual components
 	const nodeTypes = {
+		webhook: TriggerNode,
+		'http-request': ActionNode,
+		slack: ActionNode,
+		log: ActionNode,
+		// fallback visual types
 		trigger: TriggerNode,
-		action: ActionNode
+		action: ActionNode,
 	};
 
-	// Mock initial nodes and edges for the dashboard preview
-	const initialNodes = [
-		{
-			id: '1',
-			type: 'trigger',
-			position: { x: 100, y: 200 },
-			data: {
-				typeLabel: 'Webhook',
-				label: 'Catch Hook',
-				description: 'Listens for incoming HTTP POST requests.',
-				icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v14" /><path d="M12 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M12 7c-2.333 -3.333 -4.667 -5 -7 -5" /><path d="M12 7c2.333 -3.333 4.667 -5 7 -5" /></svg>'
-			}
-		},
-		{
-			id: '2',
-			type: 'action',
-			position: { x: 500, y: 150 },
-			data: {
-				typeLabel: 'Google Docs',
-				label: 'Create Document',
-				description: 'Generates a new document from a template.',
-				icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>'
-			}
-		},
-		{
-			id: '3',
-			type: 'action',
-			position: { x: 500, y: 300 },
-			data: {
-				typeLabel: 'Slack',
-				label: 'Send Message',
-				description: 'Posts a message to a specific channel.',
-				icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M8 12l8 0" /><path d="M12 8l0 8" /></svg>'
-			}
-		}
+	// Start with an empty canvas by default. Nodes will be loaded from the backend when available.
+	const initialNodes = [];
+	const initialEdges = [];
+
+	// Simple catalog for adding nodes via the picker
+	const catalog = [
+		{ id: 'webhook', label: 'Webhook (Trigger)', typeLabel: 'Webhook', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v14" /><path d="M12 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M12 7c-2.333 -3.333 -4.667 -5 -7 -5" /><path d="M12 7c2.333 -3.333 4.667 -5 7 -5" /></svg>' },
+		{ id: 'http-request', label: 'HTTP Request (Action)', typeLabel: 'HTTP Request', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12h18" /><path d="M12 3v18" /></svg>' },
+		{ id: 'slack', label: 'Slack (Action)', typeLabel: 'Slack', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg>' },
+		{ id: 'log', label: 'Log (Action)', typeLabel: 'Log', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>' }
 	];
 
-	const initialEdges = [
-		{
-			id: 'e1-2',
-			source: '1',
-			target: '2',
-			animated: true,
-			style: 'stroke: oklch(65% 0.25 310); stroke-width: 2px;'
-		},
-		{
-			id: 'e1-3',
-			source: '1',
-			target: '3',
-			animated: true,
-			style: 'stroke: oklch(75% 0.2 230); stroke-width: 2px;'
-		}
-	];
+	let nodes = $state([]);
+	let edges = $state([]);
 
-	let nodes = $state.raw([...initialNodes]);
-	let edges = $state.raw([...initialEdges]);
+	let isPickerOpen = $state(false);
 
 	// Aurora effect tracking
 	let mouseX = $state(50);
@@ -119,13 +84,12 @@
 				isActive = data.isActive;
 			}
 		} catch (error: any) {
-			// If it's a 404, it just means the workflow hasn't been saved yet. 
-			// We can quietly use the mock state without alarming the user.
+			// If it's a 404, it just means the workflow hasn't been saved yet. Use an empty canvas.
 			if (!error.message?.includes('Not Found')) {
 				console.warn('Could not load workflow data:', error);
 			}
-			nodes = [...initialNodes];
-			edges = [...initialEdges];
+			nodes = [];
+			edges = [];
 		} finally {
 			isLoading = false;
 		}
@@ -145,22 +109,136 @@
 		testOutput = null; 
 	}
 
+	let saveTimer: any = null;
+
+	function handleNodesChange(e: any) {
+		const updated = e?.detail?.nodes ?? e?.nodes ?? null;
+		if (Array.isArray(updated)) {
+			nodes = updated.map((n: any) => {
+				const existingNode = nodes.find((existing: any) => existing.id === n.id);
+				return {
+					id: n.id,
+					type: n.type,
+					position: n.position || { x: 0, y: 0 },
+					data: existingNode?.data || n.data || {},
+					selected: n.selected,
+					isConnectable: n.isConnectable
+				};
+			});
+			// Salva immediatamente i nodi spostati (le posizioni cambiano frequentemente durante drag)
+			clearTimeout(saveTimer);
+			saveTimer = setTimeout(() => {
+				saveWorkflow();
+			}, 300);
+		}
+	}
+
+	function handleEdgesChange(e: any) {
+		const updated = e?.detail?.edges ?? e?.edges ?? null;
+		if (Array.isArray(updated)) {
+			edges = updated;
+		}
+		autosaveDebounced();
+	}
+
+	async function onConnect(e: any) {
+		const ev = e?.detail ?? e;
+		const { source, target, sourceHandle, targetHandle } = ev;
+		if (!source || !target) return;
+		const id = `e${source}-${target}-${Date.now()}`;
+		edges = [...edges, { id, source, target, sourceHandle, targetHandle, animated: true, style: 'stroke: oklch(65% 0.25 310); stroke-width: 2px;' }];
+		// Persist the new edge
+		try { await saveWorkflow(); } catch (err) { console.warn('Failed to save edge', err); }
+	}
+
+	function autosaveDebounced() {
+		clearTimeout(saveTimer);
+		saveTimer = setTimeout(() => {
+			saveWorkflow();
+		}, 600);
+	}
+
 	function closePlayground() {
 		isPlaygroundOpen = false;
 		selectedNode = null;
 	}
 
+	function openPicker() {
+		isPickerOpen = true;
+	}
+
+	function closePicker() {
+		isPickerOpen = false;
+	}
+
+	function deleteNode(nodeId: string) {
+		nodes = nodes.filter((n: any) => n.id !== nodeId);
+		edges = edges.filter((e: any) => e.source !== nodeId && e.target !== nodeId);
+		if (selectedNode?.id === nodeId) {
+			selectedNode = null;
+			isPlaygroundOpen = false;
+		}
+		saveWorkflow();
+	}
+
+	function deleteEdge(edgeId: string) {
+		edges = edges.filter((e: any) => e.id !== edgeId);
+		saveWorkflow();
+	}
+
+	async function addNodeFromCatalog(item: any) {
+			// Place new node with spacing based on existing node count
+			const xOffset = 150 * (nodes.length % 3);
+			const yOffset = 150 * Math.floor(nodes.length / 3);
+		
+			const newNode = {
+				id: crypto.randomUUID(),
+				type: item.id,
+				position: { x: 100 + xOffset, y: 100 + yOffset },
+				data: {
+					typeLabel: item.typeLabel,
+					label: item.label,
+					description: '',
+					icon: item.icon,
+					...(item.id === 'http-request' ? { url: '', method: 'GET', headers: '{}' } : {}),
+					...(item.id === 'slack' ? { webhookUrl: '', message: '' } : {}),
+					...(item.id === 'webhook' ? { webhookPath: '' } : {}),
+				},
+			};
+
+			nodes = [...nodes, newNode];
+			isPickerOpen = false;
+			try {
+				await saveWorkflow();
+			} catch (e) {
+				console.warn('Auto-save failed after adding node', e);
+			}
+		}
+
 	async function saveWorkflow() {
 		isSaving = true;
 		try {
+			const payload = {
+				nodes: nodes.map((n: any) => ({
+					id: n.id,
+					type: n.type,
+					data: n.data,
+					position: n.position || { x: 0, y: 0 }
+				})),
+				edges: edges.map((e: any) => ({
+					id: e.id,
+					source: e.source,
+					target: e.target,
+					sourceHandle: e.sourceHandle,
+					targetHandle: e.targetHandle
+				}))
+			};
+			
 			await apiFetch(`/workflows/${workflowId}/graph`, {
 				method: 'PUT',
-				body: JSON.stringify({
-					nodes: nodes,
-					edges: edges
-				})
+				body: JSON.stringify(payload)
 			});
-			console.log('Workflow saved successfully');
+			console.log('Workflow saved successfully with positions', payload);
 		} catch (error) {
 			console.error('Failed to save workflow:', error);
 		} finally {
@@ -194,7 +272,7 @@
 				method: 'POST',
 				body: JSON.stringify({
 					nodeId: selectedNode.id,
-					type: selectedNode.data.typeLabel || selectedNode.type,
+					type: selectedNode.type,
 					data: selectedNode.data
 				})
 			});
@@ -260,6 +338,11 @@
 				Deploy
 			{/if}
 		</button>
+			
+		<!-- Add Node Button -->
+		<button onclick={openPicker} title="Add Node" class="px-4 py-2 bg-primary text-black rounded-full font-bold text-sm hover:scale-105 transition-all">
+			+
+		</button>
 	</div>
 
 	<!-- Svelte Flow Canvas -->
@@ -269,10 +352,12 @@
 				{nodes} 
 				{edges} 
 				{nodeTypes} 
-				fitView
 				class="organic-tech-flow"
 				colorMode="dark"
 				onnodeclick={onNodeClick}
+				onnodeschange={handleNodesChange}
+				onedgeschange={handleEdgesChange}
+				onconnect={onConnect}
 			>
 				<Controls 
 					class="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl fill-white" 
@@ -315,6 +400,63 @@
 							<span class="block text-sm text-white/70 mb-1">Node Name</span>
 							<input type="text" bind:value={selectedNode.data.label} class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors" />
 						</label>
+
+						<!-- HTTP Request Config -->
+						{#if selectedNode.type === 'http-request'}
+							<label class="block">
+								<span class="block text-sm text-white/70 mb-1">URL</span>
+								<input type="text" bind:value={selectedNode.data.url} placeholder="https://api.example.com" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors" />
+							</label>
+							<label class="block">
+								<span class="block text-sm text-white/70 mb-1">Method</span>
+								<select bind:value={selectedNode.data.method} class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors">
+									<option>GET</option>
+									<option>POST</option>
+									<option>PUT</option>
+									<option>PATCH</option>
+									<option>DELETE</option>
+								</select>
+							</label>
+							<label class="block">
+								<span class="block text-sm text-white/70 mb-1">Headers (JSON)</span>
+								<textarea bind:value={selectedNode.data.headers} rows="3" placeholder="Authorization: Bearer token" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"></textarea>
+							</label>
+						{/if}
+
+						<!-- Slack Config -->
+						{#if selectedNode.type === 'slack'}
+							<label class="block">
+								<span class="block text-sm text-white/70 mb-1">Webhook URL</span>
+								<input type="text" bind:value={selectedNode.data.webhookUrl} placeholder="https://hooks.slack.com/services/..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors" />
+							</label>
+							<label class="block">
+								<span class="block text-sm text-white/70 mb-1">Message</span>
+								<textarea bind:value={selectedNode.data.message} rows="3" placeholder="Enter your message..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"></textarea>
+							</label>
+						{/if}
+
+						<!-- Log Config -->
+						{#if selectedNode.type === 'log'}
+							<label class="block">
+								<span class="block text-sm text-white/70 mb-1">Message</span>
+								<textarea bind:value={selectedNode.data.message} rows="3" placeholder="What to log..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"></textarea>
+							</label>
+						{/if}
+
+						<!-- Webhook Config -->
+						{#if selectedNode.type === 'webhook'}
+							{#if selectedNode.data.webhookPath}
+								<label class="block">
+									<span class="block text-sm text-white/70 mb-1">Webhook Path</span>
+									<div class="flex items-center gap-2">
+										<input type="text" value={selectedNode.data.webhookPath} readonly class="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white/50 focus:outline-none cursor-not-allowed" />
+										<button onclick={() => navigator.clipboard.writeText(selectedNode.data.webhookPath)} class="px-3 py-2 bg-white/10 border border-white/10 rounded-lg text-white/70 hover:bg-white/20">Copy</button>
+									</div>
+								</label>
+							{:else}
+								<p class="text-sm text-white/40 italic">Webhook path will be generated when deployed.</p>
+							{/if}
+						{/if}
 					</div>
 				</div>
 
@@ -335,7 +477,7 @@
 			</div>
 
 			<!-- Sticky Footer Actions -->
-			<div class="p-6 border-t border-white/10 bg-black/40 mt-auto">
+			<div class="p-6 border-t border-white/10 bg-black/40 mt-auto space-y-3">
 				<button 
 					onclick={testNode}
 					disabled={isTesting}
@@ -349,10 +491,40 @@
 						Test Node
 					{/if}
 				</button>
+
+				<button 
+					onclick={() => deleteNode(selectedNode.id)}
+					class="w-full px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg font-bold hover:bg-red-500/30 transition-all"
+				>
+					Delete Node
+				</button>
 			</div>
 		{/if}
 	</div>
 </div>
+
+	<!-- Node Picker Modal -->
+	{#if isPickerOpen}
+		<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
+			<div class="bg-black/80 border border-white/10 rounded-2xl p-6 w-[520px]">
+				<h3 class="text-lg font-bold mb-4">Add Node</h3>
+				<div class="grid grid-cols-2 gap-4">
+					{#each catalog as item}
+						<button onclick={() => addNodeFromCatalog(item)} class="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10">
+							<div class="w-10 h-10 rounded bg-white/5 flex items-center justify-center">{@html item.icon}</div>
+							<div class="text-left">
+								<div class="font-bold">{item.label}</div>
+								<div class="text-xs text-white/40">{item.typeLabel}</div>
+							</div>
+						</button>
+					{/each}
+				</div>
+				<div class="mt-6 text-right">
+					<button onclick={closePicker} class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg">Close</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 
 <style>
 	:global(.organic-tech-flow .svelte-flow__pane) {

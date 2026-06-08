@@ -109,10 +109,58 @@ router.post('/:id/deploy', async (c) => {
 			.set({ isActive: body.isActive, updatedAt: new Date().toISOString() })
 			.where(eq(workflows.id, id));
 
+		// When deploying, ensure webhook nodes have a persistent path saved in their data
+		if (body.isActive) {
+			const wfNodes = await db.select().from(nodes).where(eq(nodes.workflowId, id)).all();
+			for (const node of wfNodes) {
+				try {
+					const raw = typeof node.data === 'string' ? JSON.parse(node.data) : node.data;
+					if (node.type.toLowerCase() === 'webhook') {
+						if (!raw.webhookPath) {
+							raw.webhookPath = `/api/webhooks/${id}/${node.id}`;
+							await db.update(nodes).set({ data: JSON.stringify(raw) }).where(eq(nodes.id, node.id));
+						}
+					}
+				} catch (err) {
+					console.warn('Failed to ensure webhookPath for node', node.id, err);
+				}
+			}
+		} else {
+			// On undeploy, mark workflow as inactive; cleanup could be extended to remove registrations
+			// For now, keep webhookPath persisted but rely on workflow.isActive to reject incoming calls.
+		}
+
 		return c.json({ success: true, isActive: body.isActive });
 	} catch (error: any) {
 		return c.json({ error: error.message }, 500);
 	}
 });
 
+// Delete a workflow
+router.delete('/:id', async (c) => {
+	const id = c.req.param('id');
+	try {
+		await db.delete(workflows).where(eq(workflows.id, id));
+		return c.json({ success: true });
+	} catch (error: any) {
+		return c.json({ error: error.message }, 500);
+	}
+});
+
+// Rename a workflow
+router.patch('/:id', async (c) => {
+	const id = c.req.param('id');
+	const body = await c.req.json();
+	try {
+		await db
+			.update(workflows)
+			.set({ name: body.name, updatedAt: new Date().toISOString() })
+			.where(eq(workflows.id, id));
+		return c.json({ success: true });
+	} catch (error: any) {
+		return c.json({ error: error.message }, 500);
+	}
+});
+
 export default router;
+
