@@ -34,6 +34,7 @@ WORKDIR /app
 # Copy bundled backend (which includes frontend in /public)
 COPY --from=builder /app/backend/dist/index.js ./server.js
 COPY --from=builder /app/backend/public ./public
+COPY --from=builder /app/backend/drizzle ./drizzle
 
 # Create data directory for SQLite
 RUN mkdir -p /data

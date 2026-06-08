@@ -30,5 +30,10 @@ if (!fs.existsSync(serverPath)) {
 	process.exit(1);
 }
 
+const { pathToFileURL } = require('node:url');
+
 // Execute the server
-require(serverPath);
+import(pathToFileURL(serverPath)).catch(err => {
+	console.error('Failed to start server:', err);
+	process.exit(1);
+});
