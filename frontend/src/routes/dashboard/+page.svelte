@@ -1,37 +1,37 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { apiFetch } from '$lib/api/client';
+import { onMount } from 'svelte';
+import { goto } from '$app/navigation';
+import { apiFetch } from '$lib/api/client';
 
-  let workflows = $state<any[]>([]);
-  let isLoading = $state(true);
-  let isCreating = $state(false);
+let workflows = $state<any[]>([]);
+let isLoading = $state(true);
+let isCreating = $state(false);
 
-  onMount(async () => {
-    try {
-      workflows = await apiFetch('/workflows');
-    } catch (e) {
-      console.error('Failed to load workflows', e);
-    } finally {
-      isLoading = false;
-    }
-  });
+onMount(async () => {
+	try {
+		workflows = await apiFetch('/workflows');
+	} catch (e) {
+		console.error('Failed to load workflows', e);
+	} finally {
+		isLoading = false;
+	}
+});
 
-  async function createWorkflow() {
-    isCreating = true;
-    try {
-      const newWf = await apiFetch('/workflows', { method: 'POST' });
-      // Redirect to the new canvas
-      goto(`/dashboard/${newWf.id}`);
-    } catch (e) {
-      console.error('Failed to create workflow', e);
-      isCreating = false;
-    }
-  }
+async function createWorkflow() {
+	isCreating = true;
+	try {
+		const newWf = await apiFetch('/workflows', { method: 'POST' });
+		// Redirect to the new canvas
+		goto(`/dashboard/${newWf.id}`);
+	} catch (e) {
+		console.error('Failed to create workflow', e);
+		isCreating = false;
+	}
+}
 
-  function openWorkflow(id: string) {
-    goto(`/dashboard/${id}`);
-  }
+function openWorkflow(id: string) {
+	goto(`/dashboard/${id}`);
+}
 </script>
 
 <div class="max-w-[1400px] mx-auto px-6 md:px-12 py-12">

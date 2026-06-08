@@ -1,7 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { db } from '../db';
-import { workflows } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { nodes, workflows } from '../db/schema';
 import { runWorkflow, runWorkflowFromNode } from '../engine/runner';
 
 const router = new Hono();
@@ -15,8 +15,7 @@ router.post('/:workflowId', async (c) => {
 
 	const workflow = await db.select().from(workflows).where(eq(workflows.id, workflowId)).get();
 	if (!workflow) return c.json({ error: 'Workflow not found' }, 404);
-	if (!workflow.isActive)
-		return c.json({ error: 'Workflow is not active. Deploy it first.' }, 409);
+	if (!workflow.isActive) return c.json({ error: 'Workflow is not active. Deploy it first.' }, 409);
 
 	let payload: any = {};
 	try {

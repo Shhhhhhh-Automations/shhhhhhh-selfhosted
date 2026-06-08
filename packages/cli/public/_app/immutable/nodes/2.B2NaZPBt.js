@@ -1,1 +1,64 @@
-import{a,f as o}from"../chunks/CfrYN2ca.js";import{o as w}from"../chunks/DkjOq4nL.js";import{v as m,w as k,x as y,y as M,z as n,A as r,B as d,C as h,D as z}from"../chunks/CvLgNXMg.js";import{d as j,a as c}from"../chunks/BWIk9SjA.js";import{i as C}from"../chunks/CEaf6PKY.js";import{g as p}from"../chunks/LFuS_WFH.js";import{a as _}from"../chunks/ad1oCDNU.js";var D=o('<button class="group relative flex items-center justify-center gap-2 px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all duration-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-rocket"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3 -5a9 9 0 0 0 6 -8a3 3 0 0 0 -3 -3a9 9 0 0 0 -8 6a6 6 0 0 0 -5 3"></path><path d="M7 14a6 6 0 0 0 -3 6a6 6 0 0 0 6 -3"></path><path d="M15 9m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path></svg> Deploy Silently</button>'),B=o('<button class="group relative flex items-center justify-center gap-2 px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all duration-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-layout-dashboard"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 4h6v8h-6z"></path><path d="M4 16h6v4h-6z"></path><path d="M14 12h6v8h-6z"></path><path d="M14 4h6v4h-6z"></path></svg> Open Dashboard</button>'),G=o('<button disabled="" class="px-8 py-4 bg-white/10 text-white/50 rounded-full font-bold text-lg animate-pulse">Initializing...</button>'),H=o('<div class="flex flex-col items-center justify-start min-h-screen pt-24 px-6 md:px-12 text-center"><div class="space-y-4 mb-16"><h1 class="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white leading-[0.9] svelte-1uha8ag"><span class="block">Quiet operations.</span> <span class="block text-white/40">Loud automation.</span></h1></div> <div class="flex flex-col sm:flex-row gap-4 mb-24"><!> <button class="flex items-center justify-center gap-2 px-8 py-4 bg-black border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/5 hover:border-white/40 transition-all duration-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-book-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12z"></path><path d="M19 16h-12a2 2 0 0 0 -2 2"></path><path d="M9 8h6"></path></svg> View Docs</button></div> <div class="relative w-full max-w-5xl aspect-[16/9] mb-24"><svg class="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 1000 500" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M250 350C400 350 400 150 550 150H700" stroke="url(#lineGradient)" stroke-width="8" stroke-linecap="round" class="animate-flow svelte-1uha8ag"></path><defs><linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="oklch(85% 0.25 145)"></stop><stop offset="50%" stop-color="oklch(65% 0.25 310)"></stop><stop offset="100%" stop-color="oklch(75% 0.2 230)"></stop></linearGradient></defs></svg> <div class="absolute top-[60%] left-[10%] w-72 p-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl text-left space-y-3 shadow-2xl"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-accent2/20 flex items-center justify-center text-accent2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-database"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 6m-8 0a8 3 0 1 0 16 0a8 3 0 1 0 -16 0"></path><path d="M4 6v6a8 3 0 0 0 16 0v-6"></path><path d="M4 12v6a8 3 0 0 0 16 0v-6"></path></svg></div> <span class="font-bold text-lg">Supabase</span></div> <div><div class="text-xl font-bold">Database Trigger</div> <div class="text-sm text-white/40">Table: Orders</div></div></div> <div class="absolute top-[15%] right-[10%] w-72 p-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl text-left space-y-3 shadow-2xl"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-accent1/20 flex items-center justify-center text-accent1"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-text"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path><path d="M9 9l1 0"></path><path d="M9 13l6 0"></path><path d="M9 17l6 0"></path></svg></div> <span class="font-bold text-lg">Google Docs</span></div> <div><div class="text-xl font-bold">Create Google Document</div> <div class="text-sm text-white/40">Title: Order #1042</div></div></div></div> <p class="max-w-3xl text-xl md:text-2xl text-white/60 font-light leading-relaxed">Watch your data move seamlessly. Trigger a workflow instantly when Supabase updates, process the data, and watch it generate a Google Doc automatically—all mapped out inside a fluid, neon-lit canvas.</p></div>');function Q(v,u){m(u,!0);let l=z(null);w(async()=>{try{const t=await _("/settings/status");y(l,t.isConfigured,!0)}catch(t){console.error("Failed to check status",t)}});var s=H(),i=M(n(s),2),x=n(i);{var g=t=>{var e=D();c("click",e,()=>p("/setup")),a(t,e)},b=t=>{var e=B();c("click",e,()=>p("/dashboard")),a(t,e)},f=t=>{var e=G();a(t,e)};C(x,t=>{r(l)===!1?t(g):r(l)===!0?t(b,1):t(f,-1)})}d(2),h(i),d(4),h(s),a(v,s),k()}j(["click"]);export{Q as component};
+import { a as _ } from '../chunks/ad1oCDNU.js';
+import { a as c, d as j } from '../chunks/BWIk9SjA.js';
+import { i as C } from '../chunks/CEaf6PKY.js';
+import { a, f as o } from '../chunks/CfrYN2ca.js';
+import {
+	B as d,
+	C as h,
+	w as k,
+	y as M,
+	v as m,
+	z as n,
+	A as r,
+	x as y,
+	D as z,
+} from '../chunks/CvLgNXMg.js';
+import { o as w } from '../chunks/DkjOq4nL.js';
+import { g as p } from '../chunks/LFuS_WFH.js';
+
+var D = o(
+		'<button class="group relative flex items-center justify-center gap-2 px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all duration-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-rocket"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 13a8 8 0 0 1 7 7a6 6 0 0 0 3 -5a9 9 0 0 0 6 -8a3 3 0 0 0 -3 -3a9 9 0 0 0 -8 6a6 6 0 0 0 -5 3"></path><path d="M7 14a6 6 0 0 0 -3 6a6 6 0 0 0 6 -3"></path><path d="M15 9m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path></svg> Deploy Silently</button>',
+	),
+	B = o(
+		'<button class="group relative flex items-center justify-center gap-2 px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all duration-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-layout-dashboard"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 4h6v8h-6z"></path><path d="M4 16h6v4h-6z"></path><path d="M14 12h6v8h-6z"></path><path d="M14 4h6v4h-6z"></path></svg> Open Dashboard</button>',
+	),
+	G = o(
+		'<button disabled="" class="px-8 py-4 bg-white/10 text-white/50 rounded-full font-bold text-lg animate-pulse">Initializing...</button>',
+	),
+	H = o(
+		'<div class="flex flex-col items-center justify-start min-h-screen pt-24 px-6 md:px-12 text-center"><div class="space-y-4 mb-16"><h1 class="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white leading-[0.9] svelte-1uha8ag"><span class="block">Quiet operations.</span> <span class="block text-white/40">Loud automation.</span></h1></div> <div class="flex flex-col sm:flex-row gap-4 mb-24"><!> <button class="flex items-center justify-center gap-2 px-8 py-4 bg-black border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/5 hover:border-white/40 transition-all duration-300"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-book-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12z"></path><path d="M19 16h-12a2 2 0 0 0 -2 2"></path><path d="M9 8h6"></path></svg> View Docs</button></div> <div class="relative w-full max-w-5xl aspect-[16/9] mb-24"><svg class="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 1000 500" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M250 350C400 350 400 150 550 150H700" stroke="url(#lineGradient)" stroke-width="8" stroke-linecap="round" class="animate-flow svelte-1uha8ag"></path><defs><linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="oklch(85% 0.25 145)"></stop><stop offset="50%" stop-color="oklch(65% 0.25 310)"></stop><stop offset="100%" stop-color="oklch(75% 0.2 230)"></stop></linearGradient></defs></svg> <div class="absolute top-[60%] left-[10%] w-72 p-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl text-left space-y-3 shadow-2xl"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-accent2/20 flex items-center justify-center text-accent2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-database"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 6m-8 0a8 3 0 1 0 16 0a8 3 0 1 0 -16 0"></path><path d="M4 6v6a8 3 0 0 0 16 0v-6"></path><path d="M4 12v6a8 3 0 0 0 16 0v-6"></path></svg></div> <span class="font-bold text-lg">Supabase</span></div> <div><div class="text-xl font-bold">Database Trigger</div> <div class="text-sm text-white/40">Table: Orders</div></div></div> <div class="absolute top-[15%] right-[10%] w-72 p-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl text-left space-y-3 shadow-2xl"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-accent1/20 flex items-center justify-center text-accent1"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-text"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path><path d="M9 9l1 0"></path><path d="M9 13l6 0"></path><path d="M9 17l6 0"></path></svg></div> <span class="font-bold text-lg">Google Docs</span></div> <div><div class="text-xl font-bold">Create Google Document</div> <div class="text-sm text-white/40">Title: Order #1042</div></div></div></div> <p class="max-w-3xl text-xl md:text-2xl text-white/60 font-light leading-relaxed">Watch your data move seamlessly. Trigger a workflow instantly when Supabase updates, process the data, and watch it generate a Google Doc automatically—all mapped out inside a fluid, neon-lit canvas.</p></div>',
+	);
+function Q(v, u) {
+	m(u, !0);
+	const l = z(null);
+	w(async () => {
+		try {
+			const t = await _('/settings/status');
+			y(l, t.isConfigured, !0);
+		} catch (t) {
+			console.error('Failed to check status', t);
+		}
+	});
+	var s = H(),
+		i = M(n(s), 2),
+		x = n(i);
+	var g = (t) => {
+			var e = D();
+			c('click', e, () => p('/setup')), a(t, e);
+		},
+		b = (t) => {
+			var e = B();
+			c('click', e, () => p('/dashboard')), a(t, e);
+		},
+		f = (t) => {
+			var e = G();
+			a(t, e);
+		};
+	C(x, (t) => {
+		r(l) === !1 ? t(g) : r(l) === !0 ? t(b, 1) : t(f, -1);
+	});
+	d(2), h(i), d(4), h(s), a(v, s), k();
+}
+j(['click']);
+
+export { Q as component };

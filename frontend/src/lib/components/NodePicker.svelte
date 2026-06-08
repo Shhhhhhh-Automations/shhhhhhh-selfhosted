@@ -1,34 +1,39 @@
 <script lang="ts">
-	import { serviceCatalog, getTriggers, getActions, type ServiceDefinition } from '$lib/services/catalog';
+import {
+	getActions,
+	getTriggers,
+	type ServiceDefinition,
+	serviceCatalog,
+} from '$lib/services/catalog';
 
-	let {
-		onselect,
-		onclose,
-	}: {
-		onselect: (service: ServiceDefinition) => void;
-		onclose: () => void;
-	} = $props();
+let {
+	onselect,
+	onclose,
+}: {
+	onselect: (service: ServiceDefinition) => void;
+	onclose: () => void;
+} = $props();
 
-	let query = $state('');
+let query = $state('');
 
-	const filtered = $derived(() => {
-		const q = query.toLowerCase().trim();
-		if (!q) return serviceCatalog;
-		return serviceCatalog.filter(
-			(s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
-		);
-	});
+const filtered = $derived(() => {
+	const q = query.toLowerCase().trim();
+	if (!q) return serviceCatalog;
+	return serviceCatalog.filter(
+		(s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q),
+	);
+});
 
-	const filteredTriggers = $derived(() => filtered().filter((s) => s.category === 'trigger'));
-	const filteredActions = $derived(() => filtered().filter((s) => s.category === 'action'));
+const filteredTriggers = $derived(() => filtered().filter((s) => s.category === 'trigger'));
+const filteredActions = $derived(() => filtered().filter((s) => s.category === 'action'));
 
-	function handleSelect(service: ServiceDefinition) {
-		onselect(service);
-	}
+function handleSelect(service: ServiceDefinition) {
+	onselect(service);
+}
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') onclose();
-	}
+function handleKeydown(e: KeyboardEvent) {
+	if (e.key === 'Escape') onclose();
+}
 </script>
 
 <!-- Backdrop -->

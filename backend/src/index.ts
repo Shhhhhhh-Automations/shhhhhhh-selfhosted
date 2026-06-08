@@ -1,21 +1,26 @@
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { serve } from '@hono/node-server';
-import { serveStatic } from '@hono/node-server/serve-static';
-import settingsRouter from './routes/settings';
-import setupRouter from './routes/setup';
-import engineRouter from './routes/engine';
-import workflowsRouter from './routes/workflows';
-import webhooksRouter from './routes/webhooks';
-import executionsRouter from './routes/executions';
-import { migrateDb } from './db';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { migrateDb } from './db';
+import { useError } from './hooks/useError';
+import engineRouter from './routes/engine';
+import executionsRouter from './routes/executions';
+import settingsRouter from './routes/settings';
+import setupRouter from './routes/setup';
+import variablesRouter from './routes/variables';
+import webhooksRouter from './routes/webhooks';
+import workflowsRouter from './routes/workflows';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = new Hono();
+
+// Global Error Handler Hook
+app.onError(useError);
 
 // Global CORS Middleware
 app.use('*', cors());
@@ -33,6 +38,7 @@ app.route('/api/settings', settingsRouter);
 app.route('/api/setup', setupRouter);
 app.route('/api/engine', engineRouter);
 app.route('/api/workflows', workflowsRouter);
+app.route('/api/workflows', variablesRouter);
 app.route('/api/webhooks', webhooksRouter);
 app.route('/api/executions', executionsRouter);
 

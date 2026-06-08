@@ -8,6 +8,8 @@ export const workflows = sqliteTable('workflows', {
 	name: text('name').notNull(),
 	description: text('description'),
 	isActive: integer('is_active', { mode: 'boolean' }).notNull().default(false),
+	/** JSON object of global workflow variables — accessible via {{ $vars.name }} */
+	variables: text('variables').notNull().default('{}'),
 	createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 	updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });

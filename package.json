@@ -1,19 +1,19 @@
 {
-  "name": "shhhhhhh-selfhosted",
-  "version": "0.1.0",
-  "description": "Quiet operations. Loud automation.",
-  "scripts": {
-    "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && bun build ./src/index.ts --outdir ./dist --target=node --external better-sqlite3 --external @hono/node-server",
-    "copy:frontend": "shx mkdir -p backend/public && shx cp -r frontend/build/* backend/public/",
-    "assemble:cli": "shx mkdir -p packages/cli/dist && shx cp backend/dist/index.js packages/cli/dist/ && shx mkdir -p packages/cli/public && shx cp -r backend/public/* packages/cli/public/ && shx cp -r backend/drizzle packages/cli/drizzle",
-    "build": "npm run build:frontend && npm run copy:frontend && npm run build:backend && npm run assemble:cli",
-    "start": "cd backend && bun dist/index.js",
-    "dev:backend": "cd backend && bun dev",
-    "dev:frontend": "cd frontend && npm run dev"
-  },
-  "devDependencies": {
-    "playwright": "^1.60.0",
-    "shx": "^0.3.4"
-  }
+	"name": "shhhhhhh-selfhosted",
+	"version": "0.1.0",
+	"description": "Quiet operations. Loud automation.",
+	"scripts": {
+		"build:frontend": "cd frontend && npm run build",
+		"build:backend": "cd backend && (bun build ./src/index.ts --outdir ./dist --target=node --external better-sqlite3 --external @hono/node-server || npx esbuild ./src/index.ts --bundle --platform=node --format=esm --outfile=./dist/index.js --external:better-sqlite3 --external:@hono/node-server --external:bun:sqlite)",
+		"copy:frontend": "shx mkdir -p backend/public && shx cp -r frontend/build/* backend/public/",
+		"assemble:cli": "shx mkdir -p packages/cli/dist && shx cp backend/dist/index.js packages/cli/dist/ && shx mkdir -p packages/cli/public && shx cp -r backend/public/* packages/cli/public/ && shx cp -r backend/drizzle packages/cli/drizzle",
+		"build": "npm run build:frontend && npm run copy:frontend && npm run build:backend && npm run assemble:cli",
+		"start": "cd backend && (bun dist/index.js || node dist/index.js)",
+		"dev:backend": "cd backend && npm run dev",
+		"dev:frontend": "cd frontend && npm run dev"
+	},
+	"devDependencies": {
+		"playwright": "^1.60.0",
+		"shx": "^0.3.4"
+	}
 }
