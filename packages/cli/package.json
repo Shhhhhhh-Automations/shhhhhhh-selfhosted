@@ -1,14 +1,23 @@
 {
-  "name": "shhhhhhh-automation",
-  "version": "0.1.0",
+  "name": "@shhhhhhh-automations/shhhhhhh-automation",
+  "version": "0.1.2",
   "description": "Quiet operations. Loud automation. Self-hosted platform.",
   "bin": {
-    "shhhhhhh": "./bin/shhhhhhh.js"
+    "shhhhhhh": "bin/shhhhhhh.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "public"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "start": "node ./bin/shhhhhhh.js"
   },
   "dependencies": {
+    "@hono/node-server": "^1.12.0",
     "better-sqlite3": "^11.3.0"
   },
   "engines": {
