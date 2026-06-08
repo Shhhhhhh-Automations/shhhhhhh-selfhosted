@@ -16,9 +16,7 @@ export const db = drizzle(sqlite, { schema });
 
 export async function migrateDb() {
 	console.log('Running migrations...');
-	// The migrations folder will be relative to the dist/index.js file in production
-	// In dev it's relative to src/db/index.ts
-	const migrationsPath = path.join(__dirname, '..', '..', 'drizzle');
+	const migrationsPath = process.env.SHHHHHHH_MIGRATIONS_DIR || path.join(process.cwd(), 'drizzle');
 	await migrate(db, { migrationsFolder: migrationsPath });
 	console.log('Migrations complete.');
 }

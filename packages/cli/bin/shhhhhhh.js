@@ -16,6 +16,7 @@ if (!fs.existsSync(SHHHHHHH_DATA_DIR)) {
 // Set environment variables for the backend
 process.env.SHHHHHHH_DATA_DIR = SHHHHHHH_DATA_DIR;
 process.env.PORT = process.env.PORT || '3000';
+process.env.SHHHHHHH_MIGRATIONS_DIR = path.join(__dirname, '..', 'drizzle');
 
 console.log('--- Shhhhhhh Self-Hosted ---');
 console.log(`Data directory: ${SHHHHHHH_DATA_DIR}`);

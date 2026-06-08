@@ -39,6 +39,7 @@ COPY --from=builder /app/backend/drizzle ./drizzle
 # Create data directory for SQLite
 RUN mkdir -p /data
 ENV SHHHHHHH_DATA_DIR=/data
+ENV SHHHHHHH_MIGRATIONS_DIR=/app/drizzle
 VOLUME /data
 
 # Expose the port
