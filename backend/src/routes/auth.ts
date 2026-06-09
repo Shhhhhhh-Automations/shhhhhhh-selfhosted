@@ -18,13 +18,16 @@ router.post('/login', async (c) => {
 		return c.json({ error: 'Email and password required' }, 400);
 	}
 
-	const user = await db.select().from(users).where(eq(users.email, email)).get();
+	const normalizedEmail = email.toLowerCase();
+	const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).get();
 	if (!user) {
+		console.log('Login failed: user not found for email:', email);
 		return c.json({ error: 'Invalid credentials' }, 401);
 	}
 
 	const isValid = await bcrypt.compare(password, user.passwordHash);
 	if (!isValid) {
+		console.log('Login failed: invalid password for email:', email);
 		return c.json({ error: 'Invalid credentials' }, 401);
 	}
 
@@ -35,7 +38,8 @@ router.post('/login', async (c) => {
 			role: user.role,
 			exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
 		},
-		JWT_SECRET
+		JWT_SECRET,
+		'HS256'
 	);
 
 	setCookie(c, 'auth_token', token, {
@@ -67,7 +71,7 @@ router.post('/setup', async (c) => {
 	
 	// Create the admin user
 	const [newUser] = await db.insert(users).values({
-		email,
+		email: email.toLowerCase(),
 		passwordHash,
 		role: 'admin',
 	}).returning();
@@ -91,7 +95,8 @@ router.post('/setup', async (c) => {
 			role: newUser.role,
 			exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
 		},
-		JWT_SECRET
+		JWT_SECRET,
+		'HS256'
 	);
 
 	setCookie(c, 'auth_token', token, {
@@ -119,6 +124,7 @@ router.post('/logout', async (c) => {
 router.get('/me', requireAuth, async (c) => {
 	const user = c.get('user');
 	if (!user) {
+		console.log('/me failed: no user in context');
 		return c.json({ error: 'Unauthorized' }, 401);
 	}
 	return c.json({ success: true, user: { id: user.id, email: user.email, role: user.role } });
