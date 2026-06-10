@@ -5,6 +5,7 @@ export const users = sqliteTable('users', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
+	name: text('name').notNull().default('Admin User'),
 	email: text('email').notNull().unique(),
 	passwordHash: text('password_hash').notNull(),
 	role: text('role', { enum: ['admin', 'member'] }).notNull().default('admin'),
@@ -80,6 +81,30 @@ export const settings = sqliteTable('settings', {
 	updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const credentials = sqliteTable('credentials', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	name: text('name').notNull(),
+	type: text('type').notNull(), // e.g. 'slack', 'github', 'openai'
+	encryptedValue: text('encrypted_value').notNull(),
+	createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const sessions = sqliteTable('sessions', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	device: text('device').notNull().default('Unknown Device'),
+	ipAddress: text('ip_address'),
+	createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+	lastActiveAt: text('last_active_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
 export type Workflow = typeof workflows.$inferSelect;
 export type NewWorkflow = typeof workflows.$inferInsert;
 export type Node = typeof nodes.$inferSelect;
@@ -90,3 +115,7 @@ export type Execution = typeof executions.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type Credential = typeof credentials.$inferSelect;
+export type NewCredential = typeof credentials.$inferInsert;
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;

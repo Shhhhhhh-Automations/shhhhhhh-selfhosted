@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `name` text DEFAULT 'Admin User' NOT NULL;

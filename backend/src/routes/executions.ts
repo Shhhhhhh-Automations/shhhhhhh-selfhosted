@@ -1,7 +1,7 @@
 import { desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { db } from '../db';
-import { executions } from '../db/schema';
+import { executions, workflows } from '../db/schema';
 
 const router = new Hono();
 
@@ -11,8 +11,17 @@ router.get('/', async (c) => {
 	try {
 		if (workflowId) {
 			const results = await db
-				.select()
+				.select({
+					id: executions.id,
+					workflowId: executions.workflowId,
+					workflowName: workflows.name,
+					status: executions.status,
+					startedAt: executions.startedAt,
+					finishedAt: executions.finishedAt,
+					error: executions.error,
+				})
 				.from(executions)
+				.leftJoin(workflows, eq(executions.workflowId, workflows.id))
 				.where(eq(executions.workflowId, workflowId))
 				.orderBy(desc(executions.startedAt))
 				.limit(50)
@@ -20,8 +29,17 @@ router.get('/', async (c) => {
 			return c.json(results);
 		}
 		const results = await db
-			.select()
+			.select({
+				id: executions.id,
+				workflowId: executions.workflowId,
+				workflowName: workflows.name,
+				status: executions.status,
+				startedAt: executions.startedAt,
+				finishedAt: executions.finishedAt,
+				error: executions.error,
+			})
 			.from(executions)
+			.leftJoin(workflows, eq(executions.workflowId, workflows.id))
 			.orderBy(desc(executions.startedAt))
 			.limit(100)
 			.all();

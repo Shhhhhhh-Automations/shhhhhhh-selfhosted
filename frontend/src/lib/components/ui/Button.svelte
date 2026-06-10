@@ -19,13 +19,13 @@
 	}: Props = $props();
 
 	const variants = {
-		default: 'bg-black text-white hover:bg-gray-900 shadow-sm',
+		default: 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 shadow-sm',
 		destructive: 'bg-red-500 text-white hover:bg-red-600 shadow-sm',
-		outline: 'border border-gray-200 bg-white hover:bg-gray-100 text-gray-900 shadow-sm',
-		secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 shadow-sm',
-		ghost: 'hover:bg-gray-100 hover:text-gray-900 text-gray-700',
-		link: 'text-gray-900 underline-offset-4 hover:underline',
-		aurora: 'relative overflow-hidden bg-black text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all duration-500 border border-white/10',
+		outline: 'border border-gray-200 bg-white hover:bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-transparent dark:text-gray-100 dark:hover:bg-gray-800 shadow-sm',
+		secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 shadow-sm',
+		ghost: 'hover:bg-gray-100 hover:text-gray-900 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100',
+		link: 'text-gray-900 dark:text-gray-100 underline-offset-4 hover:underline',
+		aurora: 'relative overflow-hidden bg-black dark:bg-gray-900 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all duration-500 border border-white/10 dark:border-white/5',
 	};
 
 	const sizes = {

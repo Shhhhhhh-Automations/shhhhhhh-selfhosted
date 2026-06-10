@@ -12,6 +12,7 @@ import ExecuteWorkflowNode from './nodes/ExecuteWorkflowNode.svelte';
 import AgentNode from './nodes/AgentNode.svelte';
 import VariablePanel from './VariablePanel.svelte';
 import TriggerNode from './nodes/TriggerNode.svelte';
+import { themeStore } from '$lib/stores/theme.svelte';
 
 let { class: className = '', workflowId = 'preview-workflow-1' } = $props();
 
@@ -220,35 +221,33 @@ function handleExitExecutionView() {
 let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().includes(searchQuery.toLowerCase())));
 </script>
 
-<div class="flex flex-col h-full w-full bg-[#fdfdfd] text-[#1a1a1a] font-sans overflow-hidden {className}">
+<div class="flex flex-col h-full w-full bg-[#fdfdfd] dark:bg-background text-[#1a1a1a] dark:text-gray-100 font-sans overflow-hidden {className}">
 	
 	<!-- Top Navigation -->
-	<header class="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20 shrink-0">
+	<header class="h-16 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex items-center justify-between px-6 z-20 shrink-0">
 		<div class="flex items-center gap-6">
 			<a href="/dashboard" class="flex items-center gap-2 hover:opacity-70 transition-opacity">
-				<div class="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-bold">SH</div>
+				<div class="w-8 h-8 rounded-lg bg-black dark:bg-primary text-white flex items-center justify-center font-bold">SH</div>
 			</a>
-			<nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-				<a href="/dashboard" class="hover:text-black transition-colors">Recipes</a>
-				<a href="/dashboard" class="text-black transition-colors">Dashboard</a>
-				<a href="#" class="hover:text-black transition-colors">App Connections</a>
-				<a href="#" class="hover:text-black transition-colors">Tools</a>
-				<a href="#" class="hover:text-black transition-colors">Community Library</a>
+			<nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500 dark:text-gray-400">
+				<a href="/dashboard" class="hover:text-black dark:hover:text-white transition-colors">Workflows</a>
+				<span class="text-gray-300 dark:text-gray-700">/</span>
+				<span class="text-black dark:text-white font-bold truncate max-w-[200px]">{wf.name || 'Untitled Workflow'}</span>
 			</nav>
 		</div>
 		
 		<div class="flex items-center gap-4">
-			<div class="bg-gray-100 rounded-lg p-1 flex items-center text-sm font-medium">
-				<button class="px-4 py-1.5 bg-white shadow-sm rounded-md text-black">Build</button>
-				<button onclick={history.toggle} class="px-4 py-1.5 text-gray-500 hover:text-black transition-colors">History</button>
+			<div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex items-center text-sm font-medium">
+				<button class="px-4 py-1.5 {history.isHistoryOpen ? 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white' : 'bg-white dark:bg-gray-700 shadow-sm rounded-md text-black dark:text-white'} transition-colors" onclick={() => history.isHistoryOpen && history.toggle()}>Build</button>
+				<button class="px-4 py-1.5 {history.isHistoryOpen ? 'bg-white dark:bg-gray-700 shadow-sm rounded-md text-black dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'} transition-colors" onclick={() => !history.isHistoryOpen && history.toggle()}>History</button>
 			</div>
 
-			<div class="h-6 w-px bg-gray-200 mx-2"></div>
+			<div class="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
 
 			<button 
 				onclick={wf.save}
 				disabled={wf.isSaving || wf.isExecuting}
-				class="text-sm font-medium text-gray-600 hover:text-black transition-colors disabled:opacity-50"
+				class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors disabled:opacity-50"
 			>
 				{wf.isSaving ? 'Saving...' : 'Save'}
 			</button>
@@ -256,7 +255,7 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 			<button 
 				onclick={wf.toggleDeploy}
 				disabled={wf.isDeploying || wf.isExecuting}
-				class="px-4 py-2 text-sm font-bold border rounded-lg transition-colors {wf.isActive ? 'border-emerald-500 text-emerald-600 bg-emerald-50' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}"
+				class="px-4 py-2 text-sm font-bold border rounded-lg transition-colors {wf.isActive ? 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}"
 			>
 				{wf.isDeploying ? 'Deploying...' : wf.isActive ? 'Active' : 'Deploy'}
 			</button>
@@ -264,7 +263,7 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 			<button 
 				onclick={triggerWorkflowExecute}
 				disabled={wf.isExecuting || wf.isSaving}
-				class="px-4 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+				class="px-4 py-2 bg-black dark:bg-primary text-white rounded-lg text-sm font-bold hover:bg-gray-800 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2"
 			>
 				{#if wf.isExecuting}
 					<div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -279,15 +278,15 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 	<div class="flex flex-1 overflow-hidden relative">
 		
 		<!-- Left Sidebar: Node Catalog -->
-		<aside class="w-72 border-r border-gray-200 bg-white flex flex-col z-20 shrink-0">
-			<div class="p-4 border-b border-gray-200">
+		<aside class="w-72 border-r border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex flex-col z-20 shrink-0">
+			<div class="p-4 border-b border-gray-200 dark:border-gray-800">
 				<div class="relative">
 					<svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
 					<input 
 						type="text" 
 						bind:value={searchQuery}
 						placeholder="Search connectors..." 
-						class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
+						class="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
 					/>
 				</div>
 			</div>
@@ -297,86 +296,100 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 					{#each filteredCatalog as item}
 						<button 
 							onclick={() => addNodeFromCatalog(item)}
-							class="flex flex-col items-center justify-center p-4 gap-3 bg-white hover:bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl transition-all group"
+							class="flex flex-col items-center justify-center p-4 gap-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-transparent hover:border-gray-200 dark:hover:border-gray-600 rounded-xl transition-all group"
 						>
-							<div class="w-10 h-10 rounded-lg bg-gray-50 group-hover:bg-white border border-gray-100 group-hover:shadow-sm flex items-center justify-center text-gray-600">
+							<div class="w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-900 group-hover:bg-white dark:group-hover:bg-gray-800 border border-gray-100 dark:border-gray-700 group-hover:shadow-sm flex items-center justify-center text-gray-600 dark:text-gray-300">
 								{@html item.icon}
 							</div>
-							<div class="text-xs font-medium text-center leading-tight text-gray-700">
+							<div class="text-xs font-medium text-center leading-tight text-gray-700 dark:text-gray-300">
 								{item.label}
 							</div>
 						</button>
 					{/each}
 				</div>
 			</div>
-			<div class="p-4 border-t border-gray-200 bg-gray-50/50">
-				<button onclick={() => isVarPanelOpen = true} class="w-full py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm text-gray-600">
+			<div class="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+				<button onclick={() => isVarPanelOpen = true} class="w-full py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-gray-600 dark:text-gray-300">
 					$vars (Variables)
 				</button>
 			</div>
 		</aside>
 
 		<!-- Center Canvas -->
-		<main class="flex-1 relative bg-[#f9fafb]">
+		<main class="flex-1 relative bg-gray-50 dark:bg-background">
+			
+			<!-- Aurora Mesh Gradients (Only visible in dark mode, strictly decorative) -->
+			{#if themeStore.isDark}
+				<div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+					<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/20 blur-[120px]"></div>
+					<div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-900/10 blur-[140px]"></div>
+					<div class="absolute top-[30%] right-[20%] w-[40%] h-[40%] rounded-full bg-emerald-900/10 blur-[100px]"></div>
+					<!-- Monochrome Noise Overlay -->
+					<div class="absolute inset-0 opacity-[0.03] mix-blend-overlay" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
+				</div>
+			{/if}
+
 			{#if history.isViewingExecution}
-				<div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-white border border-gray-200 shadow-lg px-6 py-2.5 rounded-full flex items-center gap-4">
-					<div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
-						Viewing Run: <span class="font-mono text-gray-500 truncate max-w-[120px]">{history.selectedExecution?.id}</span>
+				<div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 shadow-lg px-6 py-2.5 rounded-full flex items-center gap-4">
+					<div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 font-medium">
+						Viewing Run: <span class="font-mono text-gray-500 dark:text-gray-400 truncate max-w-[120px]">{history.selectedExecution?.id}</span>
 						<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ml-1
-							{history.selectedExecution?.status === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}"
+							{history.selectedExecution?.status === 'success' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}"
 						>
 							{history.selectedExecution?.status}
 						</span>
 					</div>
-					<button onclick={handleExitExecutionView} class="px-3 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-full font-bold text-xs transition-colors">
+					<button onclick={handleExitExecutionView} class="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full font-bold text-xs transition-colors">
 						Exit Playback
 					</button>
 				</div>
 			{/if}
 
-			{#if !wf.isLoading}
-				<SvelteFlow 
-					bind:nodes={wf.nodes} 
-					bind:edges={wf.edges} 
-					{nodeTypes} 
-					colorMode="light"
-					onnodeclick={onNodeClick}
-					onpaneclick={() => selectedNode = null}
-					onconnect={history.isViewingExecution ? undefined : onConnect}
-					nodesDraggable={!history.isViewingExecution}
-					nodesConnectable={!history.isViewingExecution}
-					edgesFocusable={!history.isViewingExecution}
-					elementsSelectable={true}
-					minZoom={0.5}
-					maxZoom={2}
-				>
-					<Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
-					<Controls 
-						class="bg-white border border-gray-200 rounded-lg shadow-sm fill-gray-600" 
-						buttonClass="border-gray-200 hover:bg-gray-50 fill-gray-600"
-					/>
-				</SvelteFlow>
-			{:else}
-				<div class="flex items-center justify-center h-full w-full">
-					<div class="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>
-				</div>
-			{/if}
+			<div class="absolute inset-0 z-10">
+				{#if !wf.isLoading}
+					<SvelteFlow 
+						bind:nodes={wf.nodes} 
+						bind:edges={wf.edges} 
+						{nodeTypes} 
+						colorMode={themeStore.isDark ? 'dark' : 'light'}
+						onnodeclick={onNodeClick}
+						onpaneclick={() => selectedNode = null}
+						onconnect={history.isViewingExecution ? undefined : onConnect}
+						nodesDraggable={!history.isViewingExecution}
+						nodesConnectable={!history.isViewingExecution}
+						edgesFocusable={!history.isViewingExecution}
+						elementsSelectable={true}
+						minZoom={0.5}
+						maxZoom={2}
+					>
+						<Background variant={BackgroundVariant.Dots} gap={20} size={1} color={themeStore.isDark ? '#374151' : '#e5e7eb'} />
+						<Controls 
+							class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm fill-gray-600 dark:fill-gray-400" 
+							buttonClass="border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 fill-gray-600 dark:fill-gray-400"
+						/>
+					</SvelteFlow>
+				{:else}
+					<div class="flex items-center justify-center h-full w-full">
+						<div class="w-8 h-8 border-4 border-gray-200 dark:border-gray-800 border-t-black dark:border-t-primary rounded-full animate-spin"></div>
+					</div>
+				{/if}
+			</div>
 		</main>
 
 		<!-- Right Sidebar: Properties Panel -->
 		{#if selectedNode}
-			<aside class="w-80 border-l border-gray-200 bg-white flex flex-col z-20 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
-				<div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
+			<aside class="w-80 border-l border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex flex-col z-20 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+				<div class="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-950/50">
 					<div class="flex items-center gap-3">
-						<div class="w-8 h-8 rounded bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-600">
+						<div class="w-8 h-8 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-center text-gray-600 dark:text-gray-300">
 							{@html selectedNode.data.icon}
 						</div>
 						<div>
-							<h3 class="text-sm font-bold text-gray-900">{selectedNode.data.label}</h3>
+							<h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">{selectedNode.data.label}</h3>
 							<p class="text-[10px] text-gray-500 uppercase tracking-widest">{selectedNode.data.typeLabel}</p>
 						</div>
 					</div>
-					<button onclick={() => selectedNode = null} class="p-1.5 hover:bg-gray-200 rounded-md transition-colors text-gray-400 hover:text-gray-600">
+					<button onclick={() => selectedNode = null} class="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
 					</button>
 				</div>
@@ -385,30 +398,30 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 					{#if selectedNode.data.execution}
 						<div class="space-y-4">
 							{#if selectedNode.data.execution.error}
-								<div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
+								<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-3 text-sm text-red-600 dark:text-red-400">
 									<span class="font-bold block mb-1">Error</span>
 									{selectedNode.data.execution.error}
 								</div>
 							{/if}
 							<div>
 								<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">Evaluated Input</span>
-								<pre class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto">{JSON.stringify(selectedNode.data.execution.input || {}, null, 2)}</pre>
+								<pre class="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto">{JSON.stringify(selectedNode.data.execution.input || {}, null, 2)}</pre>
 							</div>
 							<div>
 								<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">Output Data</span>
-								<pre class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono text-emerald-700 overflow-x-auto">{JSON.stringify(selectedNode.data.execution.output || {}, null, 2)}</pre>
+								<pre class="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-xs font-mono text-emerald-700 dark:text-emerald-400 overflow-x-auto">{JSON.stringify(selectedNode.data.execution.output || {}, null, 2)}</pre>
 							</div>
 						</div>
 					{:else}
 						<div class="space-y-4">
-							<div class="space-y-3">
+							<div class="space-y-4">
 								<label class="block">
 									<span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Node Name</span>
 									<input 
 										type="text" 
 										bind:value={selectedNode.data.label} 
 										oninput={wf.autosaveDebounced}
-										class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/5" 
+										class="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50" 
 									/>
 								</label>
 
@@ -420,7 +433,7 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 											type="text" 
 											bind:value={selectedNode.data.url} 
 											oninput={wf.autosaveDebounced}
-											class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/5" 
+											class="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50" 
 										/>
 									</label>
 									<label class="block">
@@ -428,7 +441,7 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 										<select 
 											bind:value={selectedNode.data.method} 
 											onchange={wf.autosaveDebounced}
-											class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/5"
+											class="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
 										>
 											<option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
 										</select>
@@ -440,7 +453,7 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 									{#if selectedNode.data.webhookPath}
 										<label class="block">
 											<span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Webhook Path</span>
-											<input type="text" value={selectedNode.data.webhookPath} readonly class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500 outline-none" />
+											<input type="text" value={selectedNode.data.webhookPath} readonly class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-500 outline-none" />
 										</label>
 									{/if}
 								{/if}
@@ -453,7 +466,7 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 											bind:value={selectedNode.data.message} 
 											oninput={wf.autosaveDebounced}
 											rows="3" 
-											class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/5"
+											class="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
 										></textarea>
 									</label>
 								{/if}
@@ -462,14 +475,14 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 					{/if}
 				</div>
 
-				<div class="p-5 border-t border-gray-200 bg-gray-50/50 space-y-2">
+				<div class="p-5 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50 space-y-2">
 					<button 
 						onclick={testNode}
 						disabled={isTesting || wf.isExecuting}
-						class="w-full py-2.5 bg-white border border-gray-200 text-black rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2"
+						class="w-full py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-black dark:text-white rounded-lg font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
 					>
 						{#if isTesting}
-							<div class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+							<div class="w-4 h-4 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin"></div>
 						{:else}
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16l13 -8z" /></svg>
 						{/if}
@@ -477,7 +490,7 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 					</button>
 					<button 
 						onclick={() => deleteNode(selectedNode.id)}
-						class="w-full py-2 text-red-600 text-sm font-medium hover:bg-red-50 rounded-lg transition-colors"
+						class="w-full py-2 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
 					>
 						Delete
 					</button>
@@ -487,10 +500,10 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 
 		<!-- Execution History Overlay (Right Sidebar equivalent when open) -->
 		{#if history.isHistoryOpen && !selectedNode}
-			<aside class="w-80 border-l border-gray-200 bg-white flex flex-col z-20 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
-				<div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-					<h3 class="text-sm font-bold text-gray-900">History</h3>
-					<button aria-label="Close History" onclick={history.close} class="p-1.5 hover:bg-gray-200 rounded-md transition-colors text-gray-400">
+			<aside class="w-80 border-l border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex flex-col z-20 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+				<div class="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-950/50">
+					<h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">History</h3>
+					<button aria-label="Close History" onclick={history.close} class="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors text-gray-400">
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
 					</button>
 				</div>
@@ -498,16 +511,16 @@ let filteredCatalog = $derived(catalog.filter(c => c.label.toLowerCase().include
 					{#each history.historyList as exec}
 						<button 
 							onclick={() => handleViewExecution(exec)}
-							class="w-full text-left p-3 bg-white hover:bg-gray-50 border {history.selectedExecution?.id === exec.id ? 'border-black ring-1 ring-black/5' : 'border-gray-200'} rounded-xl transition-all shadow-sm"
+							class="w-full text-left p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border {history.selectedExecution?.id === exec.id ? 'border-black dark:border-white ring-1 ring-black/5 dark:ring-white/10' : 'border-gray-200 dark:border-gray-700'} rounded-xl transition-all shadow-sm"
 						>
 							<div class="flex justify-between items-center gap-2 mb-1">
-								<span class="font-mono text-xs text-gray-500 truncate">{exec.id.split('-')[0]}</span>
+								<span class="font-mono text-xs text-gray-500 dark:text-gray-400 truncate">{exec.id.split('-')[0]}</span>
 								<span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded
-									{exec.status === 'success' ? 'text-emerald-600 bg-emerald-50' : ''}
-									{exec.status === 'failed' ? 'text-red-600 bg-red-50' : ''}"
+									{exec.status === 'success' ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' : ''}
+									{exec.status === 'failed' ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30' : ''}"
 								>{exec.status}</span>
 							</div>
-							<div class="text-[11px] text-gray-400">{new Date(exec.startedAt).toLocaleString()}</div>
+							<div class="text-[11px] text-gray-400 dark:text-gray-500">{new Date(exec.startedAt).toLocaleString()}</div>
 						</button>
 					{/each}
 				</div>

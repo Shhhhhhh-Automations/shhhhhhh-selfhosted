@@ -1,0 +1,1 @@
+import{ak as t,a8 as u,al as o,am as c,a0 as e}from"./BDkgyLSW.js";function l(n){o===null&&t(),u&&o.l!==null?s(o).m.push(n):c(()=>{const a=e(n);if(typeof a=="function")return a})}function i(n){o===null&&t(),l(()=>()=>e(n))}function s(n){var a=n.l;return a.u??(a.u={a:[],b:[],m:[]})}export{i as a,l as o};

@@ -8,6 +8,7 @@ import { migrateDb } from './db';
 import { useError } from './hooks/useError';
 import { requireAuth } from './middleware/auth';
 import authRouter from './routes/auth';
+import credentialsRouter from './routes/credentials';
 import engineRouter from './routes/engine';
 import executionsRouter from './routes/executions';
 import settingsRouter from './routes/settings';
@@ -44,6 +45,10 @@ app.use('/api/engine/*', requireAuth);
 app.use('/api/workflows/*', requireAuth);
 app.use('/api/webhooks/*', requireAuth);
 app.use('/api/executions/*', requireAuth);
+app.route('/api/executions', executionsRouter);
+
+app.use('/api/credentials/*', requireAuth);
+app.route('/api/credentials', credentialsRouter);
 
 // Protected API routes
 app.route('/api/engine', engineRouter);

@@ -1,0 +1,1 @@
+const t="/api";async function c(r,n={}){const a=`${t}${r}`,e=await fetch(a,{...n,credentials:n.credentials||"include",headers:{"Content-Type":"application/json",...n.headers}});if(!e.ok){const s=await e.json().catch(()=>({message:"An unknown error occurred"}));throw new Error(s.message||e.statusText)}return e.json()}export{c as a};

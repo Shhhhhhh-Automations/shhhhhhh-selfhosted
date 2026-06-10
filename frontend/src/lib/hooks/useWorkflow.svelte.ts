@@ -3,6 +3,7 @@ import { useVariableStore } from './useVariableStore.svelte';
 
 export function useWorkflow(initialWorkflowId: string) {
 	let workflowId = $state(initialWorkflowId);
+	let name = $state('');
 	let nodes = $state<any[]>([]);
 	let edges = $state<any[]>([]);
 	let isActive = $state(false);
@@ -20,6 +21,10 @@ export function useWorkflow(initialWorkflowId: string) {
 		isLoading = true;
 		try {
 			const data = await apiFetch(`/workflows/${workflowId}`);
+
+			if (data && data.name) {
+				name = data.name;
+			}
 
 			if (data && Array.isArray(data.nodes) && data.nodes.length > 0) {
 				nodes = data.nodes.map((n: any) => ({
@@ -268,6 +273,9 @@ export function useWorkflow(initialWorkflowId: string) {
 	return {
 		get workflowId() {
 			return workflowId;
+		},
+		get name() {
+			return name;
 		},
 		get nodes() {
 			return nodes;

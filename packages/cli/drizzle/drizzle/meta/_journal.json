@@ -1,13 +1,27 @@
 {
-	"version": "6",
-	"dialect": "sqlite",
-	"entries": [
-		{
-			"idx": 0,
-			"version": "6",
-			"when": 1780909635909,
-			"tag": "0000_living_adam_destine",
-			"breakpoints": true
-		}
-	]
+  "version": "6",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1780909635909,
+      "tag": "0000_living_adam_destine",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1780954252678,
+      "tag": "0001_curvy_pixie",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1780957944437,
+      "tag": "0002_parched_omega_red",
+      "breakpoints": true
+    }
+  ]
 }
